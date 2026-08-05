@@ -1,0 +1,3867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squad Ledger — MFL Portfolio Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1410">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a1410;
+    --bg-alt: #0d1a14;
+    --panel: #10201a;
+    --panel-2: #142720;
+    --line: #24382e;
+    --line-soft: #1a2c23;
+    --gold: #c9a227;
+    --gold-bright: #e0bb3c;
+    --chalk: #ece7d8;
+    --muted: #82998c;
+    --muted-2: #5c7267;
+    --profit: #4fb477;
+    --loss: #d2564b;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    background: radial-gradient(ellipse at top, #0d1c15 0%, var(--bg) 55%);
+    color: var(--chalk);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tab-nav{
+    display:flex;
+    gap: 4px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab-btn{
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 14px;
+    padding: 10px 4px;
+    margin-right: 20px;
+    cursor: pointer;
+  }
+  .tab-btn:hover{ color: var(--chalk); }
+  .tab-btn.active{
+    color: var(--gold-bright);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ---------- Header / Scoreboard ---------- */
+  header.top{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+  }
+  .brand{
+    display:flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .brand .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .brand h1{
+    font-family:'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-transform: uppercase;
+    color: var(--chalk);
+  }
+  .brand .sub{
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .scoreboard{
+    display:flex;
+    gap: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .score-cell{
+    padding: 10px 18px;
+    text-align: center;
+    border-right: 1px solid var(--line);
+    min-width: 92px;
+  }
+  .score-cell:last-child{ border-right:none; }
+  .score-cell .label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    margin-bottom: 4px;
+  }
+  .score-cell .value{
+    font-family:'Oswald', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--chalk);
+    font-variant-numeric: tabular-nums;
+  }
+  .score-cell.pl .value.pos{ color: var(--profit); }
+  .score-cell.pl .value.neg{ color: var(--loss); }
+
+  /* ---------- Sections ---------- */
+  .section{
+    margin-top: 34px;
+  }
+  .section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  .section-head h2{
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin:0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-head h2::before{
+    content:'';
+    display:inline-block;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 1px;
+  }
+  .count-pill{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted-2);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .section-subnote{
+    font-size: 11px;
+    color: var(--muted-2);
+    margin: -6px 0 12px;
+    line-height: 1.5;
+  }
+
+  /* ---------- Sync panel ---------- */
+  .sync-panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .sync-panel .field{ flex: 1 1 260px; min-width: 200px; }
+  .sync-status{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .sync-status.wrap{
+    white-space: normal;
+    align-items: flex-start;
+  }
+  .sync-dot{
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted-2);
+    flex-shrink: 0;
+  }
+  .sync-dot.live{ background: var(--profit); box-shadow: 0 0 6px var(--profit); }
+  .sync-dot.error{ background: var(--loss); box-shadow: 0 0 6px var(--loss); }
+  .sync-dot.checking{ background: var(--gold); animation: pulse 1s infinite; }
+  @keyframes pulse{ 50%{ opacity:0.35; } }
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .toggle-row input{ width:auto; accent-color: var(--gold); }
+  .change-pass-row{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .change-pass-row input{
+    flex: 1 1 160px;
+  }
+  .auto-badge{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold-bright);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ---------- Batch / agency cards ---------- */
+  .batch-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .batch-card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .batch-card:hover{ border-color: var(--gold); }
+  .batch-card.expanded{ border-color: var(--gold); grid-column: 1 / -1; cursor: default; }
+  .batch-name{
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--chalk);
+    margin-bottom: 6px;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+  }
+  .batch-name-actions{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .batch-remove-all{
+    font-family:'Inter', sans-serif;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 10px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+  .batch-remove-all:hover{ color: var(--loss); }
+  .batch-meta{
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .batch-stats{
+    display:flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .batch-stats .label{ font-size: 9px; text-transform:uppercase; letter-spacing:0.05em; color: var(--muted-2); display:block; margin-bottom:2px; }
+  .batch-detail{
+    margin-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    padding-top: 12px;
+  }
+  .batch-detail table{ width:100%; border-collapse: collapse; font-size: 12px; }
+  .batch-detail th, .batch-detail td{
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--line-soft);
+    text-align: left;
+  }
+  .batch-detail th{ color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; }
+  .batch-empty{
+    color: var(--muted);
+    font-size: 12px;
+    padding: 20px 0;
+  }
+
+  .recoup-timeline{
+    margin-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    padding-top: 12px;
+  }
+  .recoup-title{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .recoup-note{
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--muted-2);
+    font-size: 10px;
+  }
+  .recoup-row{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .recoup-cell{
+    background: var(--bg-alt);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-width: 70px;
+    text-align: center;
+  }
+  .recoup-label{
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .recoup-pending{
+    color: var(--muted-2);
+    font-style: italic;
+  }
+  .recoup-value{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--chalk);
+  }
+
+  /* ---------- Add player form ---------- */
+  .add-panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .add-grid{
+    display:grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+  @media (max-width: 760px){
+    .add-grid{ grid-template-columns: 1fr 1fr; }
+    .wrap{ padding: 16px 12px 60px; }
+    header.top{ flex-direction: column; align-items: flex-start; gap: 14px; }
+    .scoreboard{ width: 100%; justify-content: space-between; }
+    .score-cell{ flex: 1 1 auto; }
+    .batch-grid{ grid-template-columns: 1fr; }
+    .sync-panel{ flex-direction: column; align-items: stretch; }
+    .sync-panel .field{ flex: 1 1 auto; }
+    .top-import-row{ flex-direction: column; align-items: stretch; }
+    .top-import-row .btn-primary{ width: 100%; }
+    .modal{ width: 92vw; max-width: 92vw; padding: 20px; }
+    .modal-wide{ max-width: 92vw; }
+    .change-pass-row{ flex-direction: column; }
+    .change-pass-row input, .change-pass-row button{ width: 100%; }
+  }
+  .field{
+    display:flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .field label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+  }
+  input{
+    background: var(--bg-alt);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 9px 10px;
+    color: var(--chalk);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+    width: 100%;
+  }
+  input:focus{
+    border-color: var(--gold);
+  }
+  input[type="number"]{
+    font-family:'JetBrains Mono', monospace;
+  }
+  button{
+    font-family:'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 5px;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: transform 0.08s ease, filter 0.15s ease;
+  }
+  button:active{ transform: scale(0.97); }
+  .btn-primary{
+    background: var(--gold);
+    color: #14200f;
+  }
+  .btn-primary:hover{ filter: brightness(1.08); }
+  .btn-ghost{
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .btn-ghost:hover{ color: var(--chalk); border-color: var(--muted-2); }
+  .btn-sell{
+    background: var(--panel-2);
+    color: var(--gold-bright);
+    border: 1px solid var(--gold);
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  .btn-sell:hover{ background: var(--gold); color: #14200f; }
+  .btn-danger-text{
+    background: transparent;
+    color: var(--muted-2);
+    font-size: 11px;
+    padding: 4px 6px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .btn-danger-text:hover{ color: var(--loss); }
+
+  /* ---------- Table (ledger style) ---------- */
+  .ledger{
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+  }
+  .ledger table{
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+  }
+  .batch-detail{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .batch-detail table{
+    min-width: 420px;
+  }
+  .import-preview{
+    -webkit-overflow-scrolling: touch;
+  }
+  .import-preview table{
+    min-width: 600px;
+  }
+  .search-row{
+    margin-bottom: -6px;
+  }
+  .chart-panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .comps-panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-top: 14px;
+  }
+  .comps-summary{
+    display:flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .comps-summary .stat{ text-align: left; }
+  .comps-summary .stat .label{
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-2);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .comps-summary .stat .value{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    color: var(--chalk);
+  }
+  .comps-summary .stat .value.gold{ color: var(--gold-bright); }
+  .valuer-headline{
+    text-align: center;
+    padding: 24px 16px;
+  }
+  .valuer-headline .label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .valuer-headline .value{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 42px;
+    color: var(--gold-bright);
+    line-height: 1;
+  }
+  .valuer-headline .value.loss{ color: var(--loss); }
+  .valuer-sub{
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted-2);
+    margin-top: 6px;
+  }
+  .comps-table{ width:100%; border-collapse: collapse; font-size: 12px; }
+  .comps-table th, .comps-table td{
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line-soft);
+    text-align: left;
+  }
+  .comps-table th{ color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; }
+  .comps-empty{ color: var(--muted); font-size: 12px; }
+
+  .deals-table{ width:100%; border-collapse: collapse; font-size: 12px; }
+  .deals-table th, .deals-table td{
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line-soft);
+    text-align: left;
+  }
+  .deals-table th{ color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; }
+  .discount-badge{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--profit);
+    border: 1px solid var(--profit);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  .deal-age{ color: var(--muted-2); font-size: 10px; }
+
+  .overdue-badge{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--loss);
+    border: 1px solid var(--loss);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .days-held{ font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .chart-empty{
+    color: var(--muted);
+    font-size: 12px;
+    padding: 30px 0;
+    text-align: center;
+  }
+  .chart-svg{ width: 100%; height: auto; display: block; }
+  .chart-line{ fill: none; stroke: var(--gold); stroke-width: 2; }
+  .chart-line.neg{ stroke: var(--loss); }
+  .chart-fill{ fill: var(--gold); opacity: 0.08; }
+  .chart-grid-line{ stroke: var(--line-soft); stroke-width: 1; }
+  .chart-axis-label{ fill: var(--muted-2); font-size: 9px; font-family: 'JetBrains Mono', monospace; }
+  .chart-dot{ fill: var(--gold-bright); }
+  .chart-zero-line{ stroke: var(--muted-2); stroke-width: 1; stroke-dasharray: 3,3; }
+  .search-row input{
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--chalk);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+  .search-row input::placeholder{ color: var(--muted-2); }
+  .ledger thead th.sortable{
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .ledger thead th.sortable:hover{ color: var(--gold-bright); }
+  .ledger thead th.sortable .sort-arrow{
+    display:inline-block;
+    margin-left: 4px;
+    font-size: 9px;
+    color: var(--gold);
+  }
+  .ledger thead th{
+    text-align: left;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-alt);
+  }
+  .ledger tbody tr{
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .ledger tbody tr:last-child{ border-bottom: none; }
+  .ledger tbody tr:hover{ background: rgba(201,162,39,0.04); }
+  .ledger td{
+    padding: 12px 14px;
+    font-size: 13.5px;
+    vertical-align: middle;
+  }
+  .player-name{
+    font-weight: 600;
+    color: var(--chalk);
+  }
+  .player-id{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted-2);
+  }
+  .mono{
+    font-family:'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .pl-pos{ color: var(--profit); font-weight:600; }
+  .pl-neg{ color: var(--loss); font-weight:600; }
+  .actions-cell{
+    text-align:right;
+    white-space: nowrap;
+  }
+  .empty-row td{
+    padding: 34px 14px;
+    text-align:center;
+    color: var(--muted-2);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* ---------- Footer / export ---------- */
+  .footer-actions{
+    margin-top: 30px;
+    display:flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .top-import-row{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .top-import-hint{
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---------- Sell modal ---------- */
+  .overlay{
+    position: fixed; inset:0;
+    background: rgba(6,10,8,0.72);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .modal{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    width: 100%;
+    max-width: 360px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .modal h3{
+    font-family:'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 17px;
+    margin: 0 0 4px;
+    color: var(--chalk);
+  }
+  .modal .modal-sub{
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .hidden{ display:none !important; }
+
+  .modal-wide{
+    max-width: 640px;
+  }
+  .import-cols{
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+  .import-cols code{
+    background: var(--bg-alt);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--gold-bright);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .import-file-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .import-file-row input[type="file"]{
+    color: var(--muted);
+    font-size: 12px;
+    max-width: 100%;
+  }
+  .csv-input{
+    width: 100%;
+    min-height: 160px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--chalk);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 10px;
+    resize: vertical;
+  }
+  .import-preview{
+    margin-top: 14px;
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+  }
+  .import-preview table{ width:100%; border-collapse: collapse; font-size: 11px; }
+  .import-preview th, .import-preview td{
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line-soft);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .import-preview th{ color: var(--muted); font-weight: 500; position: sticky; top:0; background: var(--panel-2); }
+  .import-preview .row-error{ color: var(--loss); }
+  .import-summary{
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .toast{
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    border: 1px solid var(--gold);
+    color: var(--chalk);
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 60;
+  }
+  .toast.show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(-6px);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Squad Ledger</span>
+      <h1>MFL Portfolio Tracker</h1>
+      <span class="sub">Track buys, log sales, watch the profit column.</span>
+    </div>
+    <div class="scoreboard" id="scoreboard">
+      <div class="score-cell">
+        <div class="label">Holding</div>
+        <div class="value" id="stat-holding">0</div>
+      </div>
+      <div class="score-cell">
+        <div class="label">Spent</div>
+        <div class="value mono" id="stat-spent">$0</div>
+      </div>
+      <div class="score-cell">
+        <div class="label">Sold</div>
+        <div class="value" id="stat-sold">0</div>
+      </div>
+      <div class="score-cell pl">
+        <div class="label">Net P/L</div>
+        <div class="value mono" id="stat-pl">$0</div>
+      </div>
+      <div class="score-cell pl">
+        <div class="label">Margin</div>
+        <div class="value mono" id="stat-margin">0%</div>
+      </div>
+      <div class="score-cell">
+        <div class="label">Win rate</div>
+        <div class="value mono" id="stat-winrate">—</div>
+      </div>
+      <div class="score-cell">
+        <div class="label">Avg hold</div>
+        <div class="value mono" id="stat-avghold">—</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-btn-squad" data-tab="squad">My Squad</button>
+    <button class="tab-btn" id="tab-btn-market" data-tab="market">Market Intel</button>
+  </div>
+
+  <div id="tab-squad">
+
+
+  <div class="top-import-row">
+    <button class="btn-primary" id="btn-import">Import CSV</button>
+    <span class="top-import-hint">Bring in purchases/sales in bulk — paste or choose a file.</span>
+  </div>
+
+  <section class="section" style="margin-top:0;">
+    <div class="section-head">
+      <h2>Account</h2>
+      <span class="count-pill" id="account-status-pill">Not logged in</span>
+    </div>
+    <div class="sync-panel" id="account-panel">
+      <div class="field">
+        <label for="in-account-user">Username</label>
+        <input id="in-account-user" type="text" autocomplete="username" placeholder="e.g. mark14">
+      </div>
+      <div class="field">
+        <label for="in-account-pass">Password</label>
+        <input id="in-account-pass" type="password" autocomplete="current-password" placeholder="4+ characters">
+      </div>
+      <button class="btn-ghost" id="btn-account-login">Log in</button>
+      <button class="btn-ghost" id="btn-account-register">Create account</button>
+      <button class="btn-ghost hidden" id="btn-account-logout">Log out</button>
+      <button class="btn-ghost hidden" id="btn-account-show-change-pass">Change password</button>
+      <div class="sync-status" id="account-status">
+        <span class="sync-dot" id="account-dot"></span>
+        <span id="account-status-text">Data stays on this device until you log in.</span>
+      </div>
+      <div class="change-pass-row hidden" id="change-pass-row">
+        <input id="in-old-pass" type="password" placeholder="Current password" autocomplete="current-password">
+        <input id="in-new-pass" type="password" placeholder="New password (4+ chars)" autocomplete="new-password">
+        <button class="btn-ghost" id="btn-confirm-change-pass">Update</button>
+        <button class="btn-ghost" id="btn-cancel-change-pass">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="margin-top:0;">
+    <div class="section-head">
+      <h2>Auto-sync sales</h2>
+    </div>
+    <div class="sync-panel">
+      <div class="field">
+        <label for="in-wallet">Your MFL wallet address</label>
+        <input id="in-wallet" type="text" placeholder="0x...">
+      </div>
+      <div class="toggle-row">
+        <input type="checkbox" id="in-autosync">
+        <label for="in-autosync" style="cursor:pointer;">Check automatically every 60s</label>
+      </div>
+      <button class="btn-ghost" id="btn-check-now">Check for sales now</button>
+      <button class="btn-ghost" id="btn-test-conn">Test connection</button>
+      <div class="sync-status">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-status-text">Not checked yet</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Log a purchase</h2>
+    </div>
+    <div class="add-panel">
+      <div class="add-grid">
+        <div class="field">
+          <label for="in-name">Player name</label>
+          <input id="in-name" type="text" placeholder="e.g. Kevin Ramirez">
+        </div>
+        <div class="field">
+          <label for="in-id">Player ID (needed for auto-sync)</label>
+          <input id="in-id" type="text" placeholder="e.g. 88213">
+        </div>
+        <div class="field">
+          <label for="in-price">Buy price ($)</label>
+          <input id="in-price" type="number" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label for="in-date">Date bought</label>
+          <input id="in-date" type="date">
+        </div>
+        <div class="field">
+          <label for="in-batch">Agency / batch (optional)</label>
+          <input id="in-batch" type="text" list="batch-list" placeholder="e.g. Summer gallery buy">
+          <datalist id="batch-list"></datalist>
+        </div>
+        <div class="field">
+          <label for="in-position">Position (optional)</label>
+          <input id="in-position" type="text" placeholder="e.g. ST">
+        </div>
+        <button class="btn-primary" id="btn-add">Add player</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Recent sales</h2>
+      <button class="btn-ghost" id="btn-toggle-recent-sales" style="font-size:11px;padding:4px 10px;">Show all</button>
+    </div>
+    <div class="section-subnote">Your last 5 sales — price, profit, and margin, most recent first.</div>
+    <div id="recent-sales-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Profit over time</h2>
+    </div>
+    <div id="profit-chart-container"></div>
+  </section>
+
+  <section class="section" id="batch-section">
+    <div class="section-head">
+      <h2>By agency / batch</h2>
+      <span class="count-pill" id="batch-count">0 groups</span>
+    </div>
+    <div class="section-subnote">Profit/loss is sale proceeds so far (after MFL's 5% fee) minus everything spent in that group — including players you're still holding, which count as spend until they sell.</div>
+    <div class="batch-grid" id="batch-grid"></div>
+  </section>
+
+  <section class="section" id="position-section">
+    <div class="section-head">
+      <h2>By position</h2>
+      <span class="count-pill" id="position-count">0 groups</span>
+    </div>
+    <div class="section-subnote">Performance broken down by position tag (from CSV import or manual entry). Untagged players are grouped as "Unspecified".</div>
+    <div id="position-grid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Retirement watch</h2>
+      <span class="count-pill hidden" id="retirement-watch-count"></span>
+    </div>
+    <div class="section-subnote">Holdings with a known retirement flag (set via CSV import or edit) — sorted most urgent first. This only shows what you've told the tracker; it can't detect a flag appearing on a player it hasn't been told about.</div>
+    <div id="retirement-watch-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="search-row">
+      <input type="text" id="in-search" placeholder="Search by name, player ID, or agency/batch…">
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Current squad</h2>
+      <span class="count-pill" id="holding-count">0 players</span>
+      <span class="count-pill hidden" id="overdue-count" style="color:var(--loss);border-color:var(--loss);"></span>
+    </div>
+    <div class="section-subnote">
+      <button class="btn-ghost" id="btn-check-live-values" style="font-size:11px;padding:4px 10px;">Check live values</button>
+      Needs overall/age filled in per player (edit a player, or import from CSV, to add these) — checks one at a time against the live marketplace.
+    </div>
+    <div id="live-values-progress" class="section-subnote hidden"></div>
+    <div id="live-values-summary"></div>
+    <div class="ledger">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" data-sort-field="name" data-sort-table="holdings">Player</th>
+            <th class="sortable" data-sort-field="buyPrice" data-sort-table="holdings">Buy price</th>
+            <th class="sortable" data-sort-field="buyDate" data-sort-table="holdings">Date bought</th>
+            <th>Live value</th>
+            <th>Unrl. P/L</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="holdings-body">
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Sold history</h2>
+      <span class="count-pill" id="sold-count">0 sales</span>
+    </div>
+    <div class="ledger">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" data-sort-field="name" data-sort-table="sold">Player</th>
+            <th class="sortable" data-sort-field="buyPrice" data-sort-table="sold">Buy price</th>
+            <th class="sortable" data-sort-field="salePrice" data-sort-table="sold">Sale price (gross)</th>
+            <th class="sortable" data-sort-field="pl" data-sort-table="sold">P/L (after 5% fee)</th>
+            <th class="sortable" data-sort-field="margin" data-sort-table="sold">Margin</th>
+            <th class="sortable" data-sort-field="saleDate" data-sort-table="sold">Date sold</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sold-body">
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="footer-actions">
+    <input type="file" id="in-restore-json" accept=".json,application/json" class="hidden">
+    <button class="btn-ghost" id="btn-restore-json">Restore backup (JSON)</button>
+    <button class="btn-ghost" id="btn-backup-json">Backup (JSON)</button>
+    <button class="btn-ghost" id="btn-export">Export CSV</button>
+  </div>
+
+  </div>
+
+  <div id="tab-market" class="hidden">
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Seller activity</h2>
+      <button class="btn-ghost" id="btn-refresh-sellers" style="font-size:11px;padding:4px 10px;">Refresh</button>
+    </div>
+    <div class="section-subnote">Sellers ranked by recent activity, from our own tracked sales. "Dumping" flags anyone with 8+ sales in the last 4 hours — a strong signal of an agency liquidating fast, worth reaching out to before they finish. Builds up over time like everything else here.</div>
+    <div id="sellers-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Valuer</h2>
+    </div>
+    <div class="section-subnote">Quick resell value: live floor at age + overall-1 (tier-safe), live floor at the same but position-specific, and the midpoint between them — that midpoint is your quick-decision number. Position is required here since the midpoint needs both floors. Retirement flags apply the same as elsewhere: flagged players are valued against other flagged players, not by age, and a red flag on a contracted player is worth $0.</div>
+    <div class="sync-panel">
+      <div class="field">
+        <label for="in-valuer-age">Age</label>
+        <input id="in-valuer-age" type="number" min="15" max="45" placeholder="e.g. 27">
+      </div>
+      <div class="field">
+        <label for="in-valuer-overall">Overall</label>
+        <input id="in-valuer-overall" type="number" min="1" max="99" placeholder="e.g. 75">
+      </div>
+      <div class="field">
+        <label for="in-valuer-position">Position</label>
+        <input id="in-valuer-position" type="text" placeholder="e.g. ST">
+      </div>
+      <button class="btn-primary" id="btn-valuer">Get value</button>
+    </div>
+    <div class="sync-panel" style="margin-top:10px;">
+      <div class="field">
+        <label for="in-valuer-playerid">Or by player ID (fills age/overall/position automatically)</label>
+        <input id="in-valuer-playerid" type="text" placeholder="e.g. 213286">
+      </div>
+      <button class="btn-ghost" id="btn-valuer-playerid">Get value</button>
+    </div>
+    <div id="valuer-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Live deal alerts</h2>
+      <span class="count-pill" id="deals-count">0 flagged</span>
+    </div>
+    <div class="section-subnote">Listings currently priced at or below 70% of the floor price for their age/overall-1 comp — the same logic as "Check a deal," running automatically in the background. Needs comps data to build up first, so expect nothing here for the first while. A listing being flagged doesn't mean it's still available by the time you look — someone else may have bought it first.</div>
+    <div id="deals-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Price my listing</h2>
+    </div>
+    <div class="section-subnote">Uses your player's actual overall (not the buy-side's overall-1 discount) — this is what similar players are really selling for, so you don't underprice. Shows what you'd net at a few price points after MFL's 5% fee.</div>
+    <div class="sync-panel">
+      <div class="field">
+        <label for="in-price-age">Age</label>
+        <input id="in-price-age" type="number" min="15" max="45" placeholder="e.g. 27">
+      </div>
+      <div class="field">
+        <label for="in-price-overall">Overall</label>
+        <input id="in-price-overall" type="number" min="1" max="99" placeholder="e.g. 75">
+      </div>
+      <div class="field">
+        <label for="in-price-position">Position</label>
+        <input id="in-price-position" type="text" placeholder="e.g. ST">
+      </div>
+      <button class="btn-primary" id="btn-price-listing">Get pricing</button>
+    </div>
+    <div id="price-listing-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Check a deal</h2>
+    </div>
+    <div class="section-subnote">Floor price for players your age and one overall point below — a conservative value anchor, not an average. Comps build up over time from live market activity — expect thin data for the first while, especially for uncommon age/overall combos. Sales under $8 are ignored.</div>
+    <div class="sync-panel">
+      <div class="field">
+        <label for="in-comp-age">Age</label>
+        <input id="in-comp-age" type="number" min="15" max="45" placeholder="e.g. 27">
+      </div>
+      <div class="field">
+        <label for="in-comp-overall">Overall</label>
+        <input id="in-comp-overall" type="number" min="1" max="99" placeholder="e.g. 75">
+      </div>
+      <button class="btn-primary" id="btn-find-comps">Find comps</button>
+    </div>
+    <div id="comps-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Floor price lookup</h2>
+    </div>
+    <div class="section-subnote">Search "overall age [position]" — e.g. "75 24 ST", or just "62 25" for all positions. Or look up by player ID. Values use overall minus 1 as the conservative reference (unless the overall is a tier break — 55/65/75/85/95 — where a point down means a different rarity tier entirely, so we don't adjust). Shows the floor at that overall/age, the floor one age-year lower too, the position-specific floor, and the midpoint between the general and position floors. Live = queried fresh from MFL every search; recent sale history = our own tracked data, for context. <strong>Retirement flags</strong> (player-ID lookups only): yellow/orange/red = retiring in 3/2/1 seasons. Flagged players are valued against other flagged players, not by age. A red flag on a player still under contract makes them worth $0.</div>
+    <div class="sync-panel">
+      <div class="field" style="flex:2 1 260px;">
+        <label for="in-floor-search">Search (overall age [position])</label>
+        <input id="in-floor-search" type="text" placeholder="e.g. 75 24 ST">
+      </div>
+      <button class="btn-primary" id="btn-floor-search">Search</button>
+    </div>
+    <div class="sync-panel" style="margin-top:10px;">
+      <div class="field">
+        <label for="in-floor-playerid">Or look up by player ID</label>
+        <input id="in-floor-playerid" type="text" placeholder="e.g. 213286">
+      </div>
+      <button class="btn-ghost" id="btn-floor-playerid">Look up</button>
+    </div>
+    <div id="floor-results"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Bulk floor check</h2>
+    </div>
+    <div class="section-subnote">Paste a list of player IDs (one per line), or import an MFL export CSV directly and it'll pull the IDs out automatically. Fast mode uses our tracked recent-sale data. Live mode fetches each player's true current floor from MFL one at a time — slower (roughly 0.5–1.5s per player, so a batch of 20 might take 10–30 seconds), but genuinely real-time, and one-at-a-time keeps it safe from rate limits.</div>
+    <div class="import-file-row">
+      <input type="file" id="in-floor-bulk-file" accept=".csv,text/csv">
+      <span class="import-file-hint">import MFL CSV — or paste IDs below</span>
+    </div>
+    <textarea id="in-floor-bulk" class="csv-input" style="min-height:100px;" placeholder="213286&#10;189977&#10;248331"></textarea>
+    <div class="toggle-row" style="margin-top:10px;">
+      <input type="checkbox" id="in-floor-bulk-live">
+      <label for="in-floor-bulk-live" style="cursor:pointer;">Use live marketplace prices (slower, one at a time)</label>
+    </div>
+    <div class="modal-actions" style="justify-content:flex-start;margin-top:10px;">
+      <button class="btn-primary" id="btn-floor-bulk">Check floors</button>
+    </div>
+    <div id="floor-bulk-progress" class="section-subnote hidden"></div>
+    <div id="floor-bulk-aggregate"></div>
+    <div id="floor-bulk-results"></div>
+  </section>
+
+  </div>
+</div>
+
+<div class="overlay hidden" id="sell-overlay">
+  <div class="modal">
+    <h3>Mark as sold</h3>
+    <div class="modal-sub" id="sell-player-name">—</div>
+    <div class="field">
+      <label for="in-sale-price">Sale price ($) — the gross/listed price (MFL's 5% fee is deducted automatically)</label>
+      <input id="in-sale-price" type="number" min="0" step="0.01" placeholder="0.00" autofocus>
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="in-sale-date">Date sold</label>
+      <input id="in-sale-date" type="date">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="btn-cancel-sell">Cancel</button>
+      <button class="btn-primary" id="btn-confirm-sell">Confirm sale</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="edit-overlay">
+  <div class="modal">
+    <h3>Edit player</h3>
+    <div class="field">
+      <label for="edit-name">Name</label>
+      <input id="edit-name" type="text">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-id">Player ID</label>
+      <input id="edit-id" type="text">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-position">Position</label>
+      <input id="edit-position" type="text">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-overall">Overall (for live value checks)</label>
+      <input id="edit-overall" type="number" min="1" max="99">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-age">Age (for live value checks)</label>
+      <input id="edit-age" type="number" min="15" max="45">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-retirement">Retirement flag — seasons left (blank = none)</label>
+      <input id="edit-retirement" type="number" min="1" max="3">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-price">Buy price ($)</label>
+      <input id="edit-price" type="number" min="0" step="0.01">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-date">Date bought</label>
+      <input id="edit-date" type="date">
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label for="edit-batch">Agency / batch</label>
+      <input id="edit-batch" type="text" list="batch-list">
+    </div>
+    <div id="edit-sale-fields" class="hidden">
+      <div class="field" style="margin-top:10px;">
+        <label for="edit-sale-price">Sale price ($) — gross/listed price</label>
+        <input id="edit-sale-price" type="number" min="0" step="0.01">
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <label for="edit-sale-date">Date sold</label>
+        <input id="edit-sale-date" type="date">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="btn-cancel-edit">Cancel</button>
+      <button class="btn-primary" id="btn-confirm-edit">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="import-overlay">
+  <div class="modal modal-wide">
+    <h3>Import from CSV</h3>
+    <div class="modal-sub">Paste your data below, first row as headers. Works with a plain spreadsheet <em>or</em> a direct export from MFL itself.</div>
+    <div class="import-cols">
+      Recognized columns (any order, only <strong>name</strong> and <strong>buy price</strong> are required):<br>
+      <code>name</code> / <code>player id</code> / <code>position</code> / <code>buy price</code> / <code>buy date</code> / <code>sold</code> (yes/no) / <code>sale price</code> / <code>sale date</code> / <code>batch</code> (agency/group name)<br>
+      <strong>Sale price</strong> should be the gross/listed price — MFL's 5% fee is deducted automatically when calculating P/L.<br>
+      <strong>MFL exports work directly</strong> — <code>firstName</code>/<code>lastName</code> combine into name, <code>id</code> maps to player id, <code>positions</code> maps to position, <code>Value</code> maps to buy price (not <code>Price</code>, which is a valuation, not cost), and <code>joinedAgency</code> maps to buy date. Rows with no <code>Value</code> logged (e.g. bulk/block-bought players) get skipped — add those as one lump entry yourself if you know the block price.
+    </div>
+    <div class="import-file-row">
+      <input type="file" id="in-csv-file" accept=".csv,text/csv">
+      <span class="import-file-hint">or paste below</span>
+    </div>
+    <textarea id="in-csv" class="csv-input" placeholder="name,player id,buy price,buy date,sold,sale price,sale date,batch
+Loris Rocchi,248331,12.50,2026-06-01,yes,17,2026-06-15,Summer Gallery
+Oswaldo Avila,189977,3.00,2026-06-02,no,,,Summer Gallery"></textarea>
+    <div id="import-preview" class="import-preview hidden"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="btn-cancel-import">Cancel</button>
+      <button class="btn-ghost" id="btn-preview-import">Preview</button>
+      <button class="btn-primary hidden" id="btn-confirm-import">Import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const STORE_KEY = 'squad-ledger:players';
+  const WALLET_KEY = 'squad-ledger:wallet';
+  const AUTOSYNC_KEY = 'squad-ledger:autosync';
+  const SEEN_FEED_KEY = 'squad-ledger:seen-feed-ids';
+  const FEED_URL = 'https://z519wdyajg.execute-api.us-east-1.amazonaws.com/prod/listings/feed?limit=25';
+  const PERSONAL_RELAY_URL = 'https://mflrelay.surveytoomany.workers.dev/';
+  const PROXY_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED_URL);
+  // MFL deducts this from the gross sale price before crediting the seller.
+  // Sale prices are stored as the raw/gross figure everywhere (manual entry,
+  // CSV import, and auto-sync) — this is applied uniformly at calculation
+  // time whenever P/L or margin is derived from a sale price.
+  const MFL_SALES_TAX_PCT = 5;
+  const netOfFee = (grossPrice) => Number(grossPrice || 0) * (1 - MFL_SALES_TAX_PCT/100);
+
+  const REGISTER_URL = PERSONAL_RELAY_URL + 'auth/register';
+  const LOGIN_URL = PERSONAL_RELAY_URL + 'auth/login';
+  const DATA_GET_URL = PERSONAL_RELAY_URL + 'data/get';
+  const DATA_SAVE_URL = PERSONAL_RELAY_URL + 'data/save';
+  const CHANGE_PASS_URL = PERSONAL_RELAY_URL + 'auth/change-password';
+  const MARKET_COMPS_URL = PERSONAL_RELAY_URL + 'market/comps';
+  const MARKET_DEALS_URL = PERSONAL_RELAY_URL + 'market/deals';
+  const MARKET_FLOOR_URL = PERSONAL_RELAY_URL + 'market/floor';
+  const MARKET_LIVE_FLOOR_URL = PERSONAL_RELAY_URL + 'market/live-floor';
+  const MARKET_FLOOR_BULK_URL = PERSONAL_RELAY_URL + 'market/floor-bulk';
+  const MARKET_SELLERS_URL = PERSONAL_RELAY_URL + 'market/sellers';
+  const ACCOUNT_USER_KEY = 'squad-ledger:account-username';
+  const ACCOUNT_PASS_KEY = 'squad-ledger:account-password';
+
+  let players = []; // {id, name, playerId, buyPrice, buyDate, sold, salePrice, saleDate, autoDetected}
+  let sellTargetId = null;
+  let editTargetId = null;
+  let searchQuery = '';
+  let sortState = { holdings: { field: null, dir: 1 }, sold: { field: null, dir: 1 } };
+  let walletAddress = '';
+  let autosyncOn = false;
+  let autosyncTimer = null;
+  let seenFeedIds = [];
+  let accountUsername = '';
+  let accountPassword = '';
+  let loggedIn = false;
+  let syncingToCloud = false; // guard against overlapping pushes
+
+  // Storage shim: use Claude's window.storage when available (in-preview),
+  // otherwise fall back to the browser's own localStorage (standalone file mode).
+  const hasClaudeStorage = typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+  const store = {
+    async get(key){
+      if(hasClaudeStorage){
+        try{ return await window.storage.get(key, false); }catch(e){ return null; }
+      }
+      const v = localStorage.getItem(key);
+      return v === null ? null : { key, value: v, shared: false };
+    },
+    async set(key, value){
+      if(hasClaudeStorage){
+        try{ return await window.storage.set(key, value, false); }catch(e){ return null; }
+      }
+      try{ localStorage.setItem(key, value); return { key, value, shared: false }; }catch(e){ return null; }
+    }
+  };
+
+  const el = (id) => document.getElementById(id);
+  const fmt = (n) => '$' + Number(n).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtDate = (d) => {
+    if(!d) return '—';
+    const dt = d.includes('T') ? new Date(d) : new Date(d + 'T00:00:00');
+    if(isNaN(dt)) return d;
+    return dt.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+  };
+  const uid = () => 'p_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+
+  function showToast(msg){
+    const t = el('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._h);
+    showToast._h = setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+
+  async function loadPlayers(){
+    try{
+      const res = await store.get(STORE_KEY);
+      players = res ? JSON.parse(res.value) : [];
+    }catch(e){
+      players = [];
+    }
+    render();
+  }
+
+  async function savePlayers(){
+    try{
+      await store.set(STORE_KEY, JSON.stringify(players));
+    }catch(e){
+      showToast('Could not save — try again');
+    }
+    if(loggedIn) pushToCloud();
+  }
+
+  // ---------- Account / cross-device sync ----------
+  function setAccountStatus(state, text){
+    const dot = el('account-dot');
+    dot.classList.remove('live','error','checking');
+    if(state) dot.classList.add(state);
+    el('account-status-text').textContent = text;
+  }
+
+  function setLoggedInUI(username){
+    loggedIn = true;
+    accountUsername = username;
+    el('account-status-pill').textContent = 'Logged in as ' + username;
+    el('in-account-user').value = username;
+    el('in-account-user').disabled = true;
+    el('in-account-pass').disabled = true;
+    el('btn-account-login').classList.add('hidden');
+    el('btn-account-register').classList.add('hidden');
+    el('btn-account-logout').classList.remove('hidden');
+    el('btn-account-show-change-pass').classList.remove('hidden');
+  }
+
+  function setLoggedOutUI(){
+    loggedIn = false;
+    accountUsername = '';
+    accountPassword = '';
+    el('account-status-pill').textContent = 'Not logged in';
+    el('in-account-user').disabled = false;
+    el('in-account-pass').disabled = false;
+    el('in-account-pass').value = '';
+    el('btn-account-login').classList.remove('hidden');
+    el('btn-account-register').classList.remove('hidden');
+    el('btn-account-logout').classList.add('hidden');
+    el('btn-account-show-change-pass').classList.add('hidden');
+    el('change-pass-row').classList.add('hidden');
+  }
+
+  async function loadAccountSettings(){
+    let savedUser = '', savedPass = '';
+    try{
+      const u = await store.get(ACCOUNT_USER_KEY);
+      savedUser = u ? u.value : '';
+      const p = await store.get(ACCOUNT_PASS_KEY);
+      savedPass = p ? p.value : '';
+    }catch(e){ /* ignore */ }
+
+    if(savedUser && savedPass){
+      el('in-account-user').value = savedUser;
+      setAccountStatus('checking', 'Signing you back in…');
+      const result = await tryLogin(savedUser, savedPass, {silent:true});
+      if(!result.ok){
+        setAccountStatus('error', 'Saved login no longer works — please log in again.');
+      }
+    } else if(walletAddress && !el('in-account-user').value.trim()){
+      // Convenience: use the wallet address as a ready-made username so
+      // there's one less thing to make up. A password is still required —
+      // wallet addresses are visible on MFL, so they can't be the only key.
+      el('in-account-user').value = walletAddress;
+    }
+  }
+
+  async function tryLogin(username, password, opts){
+    opts = opts || {};
+    try{
+      const res = await fetch(LOGIN_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const body = await res.json();
+      if(!res.ok){
+        return { ok:false, error: body.error || ('HTTP ' + res.status) };
+      }
+      accountPassword = password;
+      setLoggedInUI(username);
+      await store.set(ACCOUNT_USER_KEY, username);
+      await store.set(ACCOUNT_PASS_KEY, password);
+
+      if(body.data){
+        // Cloud has data — it becomes the source of truth on this device.
+        try{
+          const parsed = JSON.parse(body.data);
+          if(Array.isArray(parsed)){
+            // Old format from before wallet/autosync were included
+            players = parsed;
+          } else {
+            players = parsed.players || [];
+            if(parsed.walletAddress){
+              walletAddress = parsed.walletAddress;
+              el('in-wallet').value = walletAddress;
+              await store.set(WALLET_KEY, walletAddress);
+            }
+            if(typeof parsed.autosyncOn === 'boolean'){
+              autosyncOn = parsed.autosyncOn;
+              el('in-autosync').checked = autosyncOn;
+              await store.set(AUTOSYNC_KEY, String(autosyncOn));
+              if(autosyncOn && walletAddress) startAutosync();
+            }
+          }
+        }catch(e){ /* leave local players as-is if cloud data is malformed */ }
+        await store.set(STORE_KEY, JSON.stringify(players));
+        render();
+        setAccountStatus('live', 'Synced — loaded your saved data.');
+      } else {
+        // Brand new account with nothing saved yet — push what's on this device up.
+        setAccountStatus('live', 'Logged in. Syncing this device\'s data up…');
+        await pushToCloud();
+      }
+      return { ok:true };
+    }catch(err){
+      return { ok:false, error: 'Network error — could not reach the server.' };
+    }
+  }
+
+  async function pushToCloud(){
+    if(!loggedIn || syncingToCloud) return;
+    syncingToCloud = true;
+    try{
+      const payload = { players, walletAddress, autosyncOn };
+      const res = await fetch(DATA_SAVE_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username: accountUsername, password: accountPassword, data: JSON.stringify(payload) })
+      });
+      if(res.ok){
+        setAccountStatus('live', 'Synced just now.');
+      } else {
+        const body = await res.json().catch(()=>({}));
+        setAccountStatus('error', 'Could not sync: ' + (body.error || ('HTTP ' + res.status)));
+      }
+    }catch(err){
+      setAccountStatus('error', 'Could not sync — network error.');
+    }
+    syncingToCloud = false;
+  }
+
+  async function loadSyncSettings(){
+    try{
+      const w = await store.get(WALLET_KEY);
+      walletAddress = w ? w.value : '';
+    }catch(e){ walletAddress = ''; }
+    try{
+      const a = await store.get(AUTOSYNC_KEY);
+      autosyncOn = a ? a.value === 'true' : false;
+    }catch(e){ autosyncOn = false; }
+    try{
+      const s = await store.get(SEEN_FEED_KEY);
+      seenFeedIds = s ? JSON.parse(s.value) : [];
+    }catch(e){ seenFeedIds = []; }
+
+    el('in-wallet').value = walletAddress;
+    el('in-autosync').checked = autosyncOn;
+    if(autosyncOn && walletAddress) startAutosync();
+  }
+
+  async function saveWallet(addr){
+    walletAddress = addr;
+    try{ await store.set(WALLET_KEY, addr); }catch(e){}
+    if(loggedIn) pushToCloud();
+  }
+
+  async function saveAutosync(on){
+    autosyncOn = on;
+    try{ await store.set(AUTOSYNC_KEY, String(on)); }catch(e){}
+    if(loggedIn) pushToCloud();
+  }
+
+  async function saveSeenFeedIds(){
+    // keep the list bounded
+    if(seenFeedIds.length > 400) seenFeedIds = seenFeedIds.slice(-400);
+    try{ await store.set(SEEN_FEED_KEY, JSON.stringify(seenFeedIds)); }catch(e){}
+  }
+
+  function setSyncStatus(state, text){
+    const dot = el('sync-dot');
+    dot.classList.remove('live','error','checking');
+    if(state) dot.classList.add(state);
+    el('sync-status-text').textContent = text;
+    el('sync-status-text').parentElement.classList.toggle('wrap', state === 'error');
+  }
+
+  function startAutosync(){
+    stopAutosync();
+    // Skip the tick while the tab is in the background — no point burning
+    // relay requests (and your Cloudflare Worker's invocation quota) on a
+    // check whose result nobody can see yet. visibilitychange below catches
+    // up immediately once the tab is looked at again.
+    autosyncTimer = setInterval(() => { if(!document.hidden) checkForSales(); }, 60000);
+    checkForSales();
+  }
+
+  function stopAutosync(){
+    if(autosyncTimer){ clearInterval(autosyncTimer); autosyncTimer = null; }
+  }
+
+  async function checkForSales(){
+    if(!walletAddress){
+      setSyncStatus('error', 'Add your wallet address first');
+      return;
+    }
+    setSyncStatus('checking', 'Checking…');
+    let feed;
+    let source = 'relay';
+    let relayErrMsg = '', directErrMsg = '', proxyErrMsg = '';
+    try{
+      const res = await fetch(PERSONAL_RELAY_URL, { headers: { 'Accept': 'application/json' } });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      feed = await res.json();
+    }catch(relayErr){
+      relayErrMsg = (relayErr && relayErr.message) ? relayErr.message : String(relayErr);
+      try{
+        setSyncStatus('checking', 'Relay unavailable, trying direct…');
+        const res2 = await fetch(FEED_URL, { headers: { 'Accept': 'application/json' } });
+        if(!res2.ok) throw new Error('HTTP ' + res2.status);
+        feed = await res2.json();
+        source = 'direct';
+      }catch(directErr){
+        directErrMsg = (directErr && directErr.message) ? directErr.message : String(directErr);
+        try{
+          setSyncStatus('checking', 'Trying backup relay…');
+          const res3 = await fetch(PROXY_URL, { headers: { 'Accept': 'application/json' } });
+          if(!res3.ok) throw new Error('HTTP ' + res3.status);
+          feed = await res3.json();
+          source = 'backup relay';
+        }catch(proxyErr){
+          proxyErrMsg = (proxyErr && proxyErr.message) ? proxyErr.message : String(proxyErr);
+          setSyncStatus('error', 'Relay: "' + relayErrMsg + '" · Direct: "' + directErrMsg + '" · Backup: "' + proxyErrMsg + '"');
+          return;
+        }
+      }
+    }
+
+    const mine = walletAddress.toLowerCase();
+    let matchedCount = 0;
+    let newSeen = [];
+
+    for(const entry of feed){
+      if(!entry || !entry.id) continue;
+      newSeen.push(entry.id);
+      if(seenFeedIds.includes(entry.id)) continue; // already processed
+      if(!entry.sellerAddress || entry.sellerAddress.toLowerCase() !== mine) continue;
+      if(!entry.player || entry.player.id == null) continue;
+
+      const pid = String(entry.player.id);
+      const holding = players.find(p => !p.sold && p.playerId && String(p.playerId) === pid);
+      if(holding){
+        holding.sold = true;
+        holding.salePrice = entry.price;
+        holding.saleDate = new Date(entry.purchaseDateTime).toISOString();
+        holding.autoDetected = true;
+        matchedCount++;
+      }
+    }
+
+    // merge seen ids (cap list, keep most recent)
+    seenFeedIds = Array.from(new Set([...seenFeedIds, ...newSeen]));
+    await saveSeenFeedIds();
+
+    if(matchedCount > 0){
+      await savePlayers();
+      render();
+      showToast(matchedCount === 1 ? '1 sale auto-detected' : matchedCount + ' sales auto-detected');
+    }
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('live', 'Last checked ' + timeStr + (source !== 'relay' ? ' (via ' + source + ')' : ''));
+  }
+
+  function render(){
+    const holdings = players.filter(p => !p.sold);
+    const sold = players.filter(p => p.sold);
+
+    // Scoreboard
+    const spent = players.reduce((s,p) => s + Number(p.buyPrice || 0), 0);
+    const soldProceeds = sold.reduce((s,p) => s + netOfFee(p.salePrice), 0);
+    // Net P/L = sale proceeds so far minus total spent on everything ever
+    // bought (including players still held) — a running "money in vs money
+    // out" view, not strict realized-only profit. Unsold holdings count as
+    // spend until they sell.
+    const netPL = soldProceeds - spent;
+
+    const soldDurations = sold
+      .map(p => (toMs(p.saleDate) !== null && toMs(p.buyDate) !== null) ? (toMs(p.saleDate) - toMs(p.buyDate)) / 86400000 : null)
+      .filter(d => d !== null && d >= 0);
+    const avgSellDays = soldDurations.length ? soldDurations.reduce((s,d) => s+d, 0) / soldDurations.length : null;
+    const winners = sold.filter(p => netOfFee(p.salePrice) - Number(p.buyPrice||0) > 0).length;
+    const winRate = sold.length ? (winners / sold.length) * 100 : null;
+
+    el('stat-holding').textContent = holdings.length;
+    el('stat-spent').textContent = fmt(spent);
+    el('stat-sold').textContent = sold.length;
+    const plCell = el('stat-pl');
+    plCell.textContent = (netPL >= 0 ? '+' : '−') + fmt(Math.abs(netPL)).replace('$','$');
+    plCell.classList.remove('pos','neg');
+    plCell.classList.add(netPL >= 0 ? 'pos' : 'neg');
+
+    const marginCell = el('stat-margin');
+    const overallMargin = spent > 0 ? (netPL / spent) * 100 : null;
+    marginCell.textContent = overallMargin === null ? '—' : (overallMargin >= 0 ? '+' : '−') + Math.abs(overallMargin).toFixed(1) + '%';
+    marginCell.classList.remove('pos','neg');
+    if(overallMargin !== null) marginCell.classList.add(overallMargin >= 0 ? 'pos' : 'neg');
+
+    el('stat-winrate').textContent = winRate === null ? '—' : winRate.toFixed(0) + '%';
+    el('stat-avghold').textContent = avgSellDays === null ? '—' : avgSellDays.toFixed(0) + 'd';
+
+    el('holding-count').textContent = holdings.length + (holdings.length === 1 ? ' player' : ' players');
+    el('sold-count').textContent = sold.length + (sold.length === 1 ? ' sale' : ' sales');
+
+    renderBatches(players);
+    renderPositions(players);
+    renderRetirementWatch(players);
+    updateBatchDatalist(players);
+
+    const overdueEl = el('overdue-count');
+    if(avgSellDays !== null){
+      const overdueCount = holdings.filter(p => {
+        const bm = toMs(p.buyDate);
+        return bm !== null && ((Date.now() - bm) / 86400000) > avgSellDays;
+      }).length;
+      if(overdueCount > 0){
+        overdueEl.textContent = overdueCount + (overdueCount === 1 ? ' overdue' : ' overdue');
+        overdueEl.classList.remove('hidden');
+      } else {
+        overdueEl.classList.add('hidden');
+      }
+    } else {
+      overdueEl.classList.add('hidden');
+    }
+
+    const hBody = el('holdings-body');
+    const filteredHoldings = holdings.filter(matchesSearch);
+    if(holdings.length === 0){
+      hBody.innerHTML = `<tr class="empty-row"><td colspan="6">No players yet — log your first purchase above.</td></tr>`;
+    } else if(filteredHoldings.length === 0){
+      hBody.innerHTML = `<tr class="empty-row"><td colspan="6">No matches for "${escapeHtml(searchQuery)}".</td></tr>`;
+    } else {
+      hBody.innerHTML = sortRows(filteredHoldings, 'holdings', rows => rows.slice().sort((a,b) => (b.buyDate||'').localeCompare(a.buyDate||'')))
+        .map(p => {
+          const buyMs = toMs(p.buyDate);
+          const daysHeld = buyMs !== null ? Math.floor((Date.now() - buyMs) / 86400000) : null;
+          const isOverdue = avgSellDays !== null && daysHeld !== null && daysHeld > avgSellDays;
+          const daysHeldStr = daysHeld === null ? '' : `<div class="days-held">held ${daysHeld}d${avgSellDays !== null ? ' · your avg: ' + avgSellDays.toFixed(0) + 'd' : ''}</div>`;
+          const lv = liveValues[p.id];
+          let liveValueCell = '<td class="mono">—</td>';
+          let unrealizedCell = '<td class="mono">—</td>';
+          if(lv && lv.error){
+            liveValueCell = `<td class="mono" style="color:var(--muted);font-size:11px;">${escapeHtml(lv.error)}</td>`;
+          } else if(lv && lv.value != null){
+            const unrl = lv.value - Number(p.buyPrice||0);
+            const unrlClass = unrl >= 0 ? 'pl-pos' : 'pl-neg';
+            liveValueCell = `<td class="mono">${fmt(lv.value)}</td>`;
+            unrealizedCell = `<td class="mono ${unrlClass}">${(unrl >= 0 ? '+' : '−') + fmt(Math.abs(unrl))}</td>`;
+          } else if(!p.overall || !p.age){
+            liveValueCell = '<td class="mono" style="color:var(--muted);font-size:11px;">add overall/age</td>';
+          }
+          return `
+          <tr>
+            <td>
+              <div class="player-name">${escapeHtml(p.name)}${isOverdue ? '<span class="overdue-badge">overdue</span>' : ''}</div>
+              ${(p.playerId || p.position) ? `<div class="player-id">${[p.playerId ? 'ID ' + escapeHtml(p.playerId) : '', escapeHtml(p.position||'')].filter(Boolean).join(' · ')}</div>` : ''}${p.batch ? `<div class="player-id">${escapeHtml(p.batch)}</div>` : ''}
+            </td>
+            <td class="mono">${fmt(p.buyPrice)}<div class="days-held">B/E ${fmt(p.buyPrice / (1 - MFL_SALES_TAX_PCT/100))}</div></td>
+            <td>${fmtDate(p.buyDate)}${daysHeldStr}</td>
+            ${liveValueCell}
+            ${unrealizedCell}
+            <td class="actions-cell">
+              <button class="btn-sell" data-sell="${p.id}">Mark sold</button>
+              <button class="btn-danger-text" data-edit="${p.id}">edit</button>
+              <button class="btn-danger-text" data-remove="${p.id}">remove</button>
+            </td>
+          </tr>
+        `;
+        }).join('');
+    }
+
+    // Sold table
+    const sBody = el('sold-body');
+    const filteredSold = sold.filter(matchesSearch);
+    if(sold.length === 0){
+      sBody.innerHTML = `<tr class="empty-row"><td colspan="7">Sales will show up here once you mark a player sold.</td></tr>`;
+    } else if(filteredSold.length === 0){
+      sBody.innerHTML = `<tr class="empty-row"><td colspan="7">No matches for "${escapeHtml(searchQuery)}".</td></tr>`;
+    } else {
+      sBody.innerHTML = sortRows(filteredSold, 'sold', rows => rows.slice().sort((a,b) => (b.saleDate||'').localeCompare(a.saleDate||'')))
+        .map(p => {
+          const pl = netOfFee(p.salePrice) - Number(p.buyPrice||0);
+          const plClass = pl >= 0 ? 'pl-pos' : 'pl-neg';
+          const plStr = (pl >= 0 ? '+' : '−') + fmt(Math.abs(pl));
+          const buyPriceNum = Number(p.buyPrice||0);
+          const marginPct = buyPriceNum > 0 ? (pl / buyPriceNum) * 100 : null;
+          const marginStr = marginPct === null ? '—' : (marginPct >= 0 ? '+' : '−') + Math.abs(marginPct).toFixed(1) + '%';
+          return `
+          <tr>
+            <td>
+              <div class="player-name">${escapeHtml(p.name)}</div>
+              ${(p.playerId || p.position) ? `<div class="player-id">${[p.playerId ? 'ID ' + escapeHtml(p.playerId) : '', escapeHtml(p.position||'')].filter(Boolean).join(' · ')}</div>` : ''}${p.batch ? `<div class="player-id">${escapeHtml(p.batch)}</div>` : ''}
+            </td>
+            <td class="mono">${fmt(p.buyPrice)}</td>
+            <td class="mono">${fmt(p.salePrice)}</td>
+            <td class="mono ${plClass}">${plStr}${p.autoDetected ? '<span class="auto-badge">auto</span>' : ''}</td>
+            <td class="mono ${plClass}">${marginStr}</td>
+            <td>${fmtDate(p.saleDate)}</td>
+            <td class="actions-cell">
+              <button class="btn-danger-text" data-edit="${p.id}">edit</button>
+              <button class="btn-danger-text" data-remove="${p.id}">remove</button>
+            </td>
+          </tr>
+          `;
+        }).join('');
+    }
+
+    updateSortHeaders();
+    renderProfitChart();
+    renderRecentSales();
+  }
+
+  let recentSalesExpanded = false;
+  let bulkCsvContext = null; // {playerId -> {age, overall, position, retirementYears, isFreeAgent, name}} when a CSV was imported for bulk floor checking
+  let liveValues = {}; // player.id -> {value, error} from mark-to-market checks
+
+  function renderRetirementWatch(players){
+    const resultsEl = el('retirement-watch-results');
+    const countEl = el('retirement-watch-count');
+    if(!resultsEl) return;
+
+    const flagged = players.filter(p => !p.sold && p.retirementYears != null).sort((a,b) => a.retirementYears - b.retirementYears);
+
+    if(flagged.length === 0){
+      countEl.classList.add('hidden');
+      resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty">No flagged holdings on file yet — this fills in as you tag players via edit or CSV import.</div></div>`;
+      return;
+    }
+
+    countEl.textContent = flagged.length + (flagged.length === 1 ? ' flagged' : ' flagged');
+    countEl.classList.remove('hidden');
+
+    const rows = flagged.map(p => {
+      const flag = flagLabel(p.retirementYears);
+      const color = p.retirementYears === 1 ? 'var(--loss)' : (p.retirementYears === 2 ? 'var(--gold-bright)' : 'var(--muted)');
+      return `<tr>
+        <td>${escapeHtml(p.name)}</td>
+        <td style="color:${color};"><strong>${escapeHtml(flag || '—')}</strong></td>
+        <td class="mono">${fmt(p.buyPrice)}</td>
+        <td>${escapeHtml(p.batch || '—')}</td>
+      </tr>`;
+    }).join('');
+
+    resultsEl.innerHTML = `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>Player</th><th>Flag</th><th>Buy price</th><th>Batch</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function checkLiveValues(){
+    const holdings = players.filter(p => !p.sold);
+    const checkable = holdings.filter(p => p.overall != null && p.age != null);
+    const progressEl = el('live-values-progress');
+    const summaryEl = el('live-values-summary');
+
+    if(checkable.length === 0){
+      showToast('No holdings have overall/age filled in yet — edit a player or import from CSV to add these');
+      return;
+    }
+
+    progressEl.classList.remove('hidden');
+    summaryEl.innerHTML = '';
+
+    for(let i = 0; i < checkable.length; i++){
+      const p = checkable[i];
+      progressEl.textContent = `Checking ${i + 1}/${checkable.length}… (${p.name})`;
+      try{
+        const res = await fetch(MARKET_LIVE_FLOOR_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ age: p.age, overall: p.overall, position: p.position || undefined, retirementYears: p.retirementYears || undefined })
+        });
+        const body = await res.json();
+        if(!res.ok || body.found === false){
+          liveValues[p.id] = { value: null, error: body.message || body.error || 'lookup failed' };
+        } else if(body.worthless){
+          liveValues[p.id] = { value: 0 };
+        } else {
+          const value = body.midpoint != null ? body.midpoint : (body.floor1 ? body.floor1.floor : null);
+          liveValues[p.id] = value != null ? { value } : { value: null, error: 'no comps found' };
+        }
+      }catch(err){
+        liveValues[p.id] = { value: null, error: 'network error' };
+      }
+      render();
+    }
+
+    progressEl.textContent = `Done — checked ${checkable.length} of ${holdings.length} holdings live.`;
+    if(holdings.length > checkable.length){
+      progressEl.textContent += ` (${holdings.length - checkable.length} skipped — missing overall/age)`;
+    }
+
+    const totalUnrealized = checkable.reduce((s,p) => {
+      const lv = liveValues[p.id];
+      if(!lv || lv.value == null) return s;
+      return s + (lv.value - Number(p.buyPrice||0));
+    }, 0);
+    const plClass = totalUnrealized >= 0 ? 'pl-pos' : 'pl-neg';
+    summaryEl.innerHTML = `<div class="comps-panel"><div class="comps-summary"><div class="stat"><span class="label">Total unrealized P/L (checked holdings)</span><span class="value ${plClass}">${(totalUnrealized >= 0 ? '+' : '−') + fmt(Math.abs(totalUnrealized))}</span></div></div></div>`;
+  }
+
+  function renderRecentSales(){
+    const container = el('recent-sales-results');
+    if(!container) return;
+    const allRecent = players.filter(p => p.sold && p.saleDate)
+      .slice()
+      .sort((a,b) => (b.saleDate||'').localeCompare(a.saleDate||''));
+
+    const toggleBtn = el('btn-toggle-recent-sales');
+    if(toggleBtn){
+      toggleBtn.classList.toggle('hidden', allRecent.length <= 5);
+      toggleBtn.textContent = recentSalesExpanded ? 'Show less' : 'Show all';
+    }
+
+    const recent = recentSalesExpanded ? allRecent : allRecent.slice(0, 5);
+
+    if(recent.length === 0){
+      container.innerHTML = '<div class="comps-panel"><div class="comps-empty">Nothing sold yet — this will fill in as you log sales.</div></div>';
+      return;
+    }
+
+    const rows = recent.map(p => {
+      const pl = netOfFee(p.salePrice) - Number(p.buyPrice||0);
+      const plClass = pl >= 0 ? 'pl-pos' : 'pl-neg';
+      const plStr = (pl >= 0 ? '+' : '−') + fmt(Math.abs(pl));
+      const buyPriceNum = Number(p.buyPrice||0);
+      const marginPct = buyPriceNum > 0 ? (pl / buyPriceNum) * 100 : null;
+      const marginStr = marginPct === null ? '—' : (marginPct >= 0 ? '+' : '−') + Math.abs(marginPct).toFixed(1) + '%';
+      return `
+        <tr>
+          <td>${escapeHtml(p.name)}</td>
+          <td class="mono">${fmt(p.buyPrice)}</td>
+          <td class="mono">${fmt(p.salePrice)}</td>
+          <td class="mono ${plClass}">${plStr}</td>
+          <td class="mono ${plClass}">${marginStr}</td>
+          <td>${fmtDate(p.saleDate)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>Player</th><th>Buy</th><th>Sold (gross)</th><th>P/L</th><th>Margin</th><th>Date</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function matchesSearch(p){
+    if(!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (p.name||'').toLowerCase().includes(q) ||
+           (p.playerId||'').toLowerCase().includes(q) ||
+           (p.batch||'').toLowerCase().includes(q);
+  }
+
+  function sortRows(rows, tableKey, defaultSortFn){
+    const state = sortState[tableKey];
+    if(!state.field) return defaultSortFn(rows);
+    const dir = state.dir;
+    return rows.slice().sort((a,b) => {
+      let av, bv;
+      switch(state.field){
+        case 'name':
+          av = (a.name||'').toLowerCase(); bv = (b.name||'').toLowerCase();
+          return dir * av.localeCompare(bv);
+        case 'buyPrice':
+          av = Number(a.buyPrice||0); bv = Number(b.buyPrice||0);
+          return dir * (av - bv);
+        case 'buyDate':
+          av = a.buyDate||''; bv = b.buyDate||'';
+          return dir * av.localeCompare(bv);
+        case 'salePrice':
+          av = Number(a.salePrice||0); bv = Number(b.salePrice||0);
+          return dir * (av - bv);
+        case 'saleDate':
+          av = a.saleDate||''; bv = b.saleDate||'';
+          return dir * av.localeCompare(bv);
+        case 'pl':
+          av = netOfFee(a.salePrice) - Number(a.buyPrice||0);
+          bv = netOfFee(b.salePrice) - Number(b.buyPrice||0);
+          return dir * (av - bv);
+        case 'margin': {
+          const aBuy = Number(a.buyPrice||0), bBuy = Number(b.buyPrice||0);
+          const aPl = netOfFee(a.salePrice) - aBuy, bPl = netOfFee(b.salePrice) - bBuy;
+          av = aBuy > 0 ? aPl/aBuy : -Infinity;
+          bv = bBuy > 0 ? bPl/bBuy : -Infinity;
+          return dir * (av - bv);
+        }
+        default: return 0;
+      }
+    });
+  }
+
+  function updateSortHeaders(){
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.querySelectorAll('.sort-arrow').forEach(a => a.remove());
+      const table = th.getAttribute('data-sort-table');
+      const field = th.getAttribute('data-sort-field');
+      const state = sortState[table];
+      if(state && state.field === field){
+        const arrow = document.createElement('span');
+        arrow.className = 'sort-arrow';
+        arrow.textContent = state.dir === 1 ? '▲' : '▼';
+        th.appendChild(arrow);
+      }
+    });
+  }
+
+  function renderProfitChart(){
+    const container = el('profit-chart-container');
+    if(!container) return;
+    const soldSorted = players.filter(p => p.sold && p.saleDate)
+      .slice()
+      .sort((a,b) => (a.saleDate||'').localeCompare(b.saleDate||''));
+
+    if(soldSorted.length === 0){
+      container.innerHTML = '<div class="chart-panel"><div class="chart-empty">Sell a player to start seeing your profit trend here.</div></div>';
+      return;
+    }
+
+    let cumulative = 0;
+    const points = soldSorted.map(p => {
+      const pl = netOfFee(p.salePrice) - Number(p.buyPrice||0);
+      cumulative += pl;
+      return { date: p.saleDate, value: cumulative, name: p.name };
+    });
+
+    container.innerHTML = '<div class="chart-panel">' + buildLineChartSvg(points) + '</div>';
+  }
+
+  function buildLineChartSvg(points){
+    const W = 700, H = 220, padL = 54, padR = 16, padT = 16, padB = 28;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+
+    const values = points.map(p => p.value);
+    let minV = Math.min(0, ...values);
+    let maxV = Math.max(0, ...values);
+    if(minV === maxV){ minV -= 1; maxV += 1; }
+    const rangeV = maxV - minV;
+
+    const n = points.length;
+    const xFor = (i) => padL + (n === 1 ? innerW/2 : (i/(n-1)) * innerW);
+    const yFor = (v) => padT + innerH - ((v - minV)/rangeV) * innerH;
+    const zeroY = yFor(0);
+
+    const linePath = points.map((p,i) => `${i===0?'M':'L'} ${xFor(i).toFixed(1)} ${yFor(p.value).toFixed(1)}`).join(' ');
+    const fillPath = `${linePath} L ${xFor(n-1).toFixed(1)} ${zeroY.toFixed(1)} L ${xFor(0).toFixed(1)} ${zeroY.toFixed(1)} Z`;
+
+    const lastValue = points[points.length-1].value;
+    const lineClass = lastValue >= 0 ? 'chart-line' : 'chart-line neg';
+
+    const gridLines = [minV, (minV+maxV)/2, maxV].map(v => {
+      const y = yFor(v).toFixed(1);
+      return `<line class="chart-grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"></line>
+        <text class="chart-axis-label" x="4" y="${(Number(y)+3).toFixed(1)}">${fmt(v)}</text>`;
+    }).join('');
+
+    const firstLabel = fmtDate(points[0].date);
+    const lastLabel = fmtDate(points[n-1].date);
+
+    const dots = points.map((p,i) => `<circle class="chart-dot" cx="${xFor(i).toFixed(1)}" cy="${yFor(p.value).toFixed(1)}" r="2.5"><title>${escapeHtml(p.name)}: ${fmt(p.value)}</title></circle>`).join('');
+
+    return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      ${gridLines}
+      <line class="chart-zero-line" x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W-padR}" y2="${zeroY.toFixed(1)}"></line>
+      <path class="chart-fill" d="${fillPath}"></path>
+      <path class="${lineClass}" d="${linePath}"></path>
+      ${dots}
+      <text class="chart-axis-label" x="${padL}" y="${H-6}">${escapeHtml(firstLabel)}</text>
+      <text class="chart-axis-label" x="${W-padR}" y="${H-6}" text-anchor="end">${escapeHtml(lastLabel)}</text>
+    </svg>`;
+  }
+
+  let expandedBatch = null; // name of currently expanded batch card, or null
+
+  function toMs(dateStr){
+    if(!dateStr) return null;
+    const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + 'T00:00:00');
+    return isNaN(d) ? null : d.getTime();
+  }
+
+  function computeRecoupTimeline(group){
+    const buyTimes = group.map(p => toMs(p.buyDate)).filter(t => t !== null);
+    if(buyTimes.length === 0) return null;
+    const anchor = Math.min(...buyTimes);
+    const totalSpend = group.reduce((s,p) => s + Number(p.buyPrice||0), 0);
+    if(totalSpend <= 0) return null;
+
+    const checkpoints = [
+      {label: '24h', days: 1},
+      {label: '3 days', days: 3},
+      {label: '1 week', days: 7},
+      {label: '2 weeks', days: 14},
+      {label: '1 month', days: 30},
+    ];
+    const now = Date.now();
+
+    const results = checkpoints.map(cp => {
+      const cutoff = anchor + cp.days * 86400000;
+      const recouped = group.filter(p => p.sold && toMs(p.saleDate) !== null && toMs(p.saleDate) <= cutoff)
+        .reduce((s,p) => s + netOfFee(p.salePrice), 0);
+      return { label: cp.label, pct: (recouped/totalSpend)*100, reached: now >= cutoff };
+    });
+
+    const allRecouped = group.filter(p => p.sold).reduce((s,p) => s + netOfFee(p.salePrice), 0);
+    results.push({ label: 'Now', pct: (allRecouped/totalSpend)*100, reached: true });
+
+    return results;
+  }
+
+  function renderBatches(players){
+    const grid = el('batch-grid');
+    const groups = {};
+    players.forEach(p => {
+      const key = (p.batch || '').trim() || 'Unsorted';
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    const names = Object.keys(groups).sort((a,b) => {
+      if(a === 'Unsorted') return 1;
+      if(b === 'Unsorted') return -1;
+      return a.localeCompare(b);
+    });
+
+    el('batch-count').textContent = names.length + (names.length === 1 ? ' group' : ' groups');
+
+    if(players.length === 0){
+      grid.innerHTML = '<div class="batch-empty">Tag purchases with an agency/batch name to see grouped profit and loss here.</div>';
+      return;
+    }
+
+    grid.innerHTML = names.map(name => {
+      const group = groups[name];
+      const held = group.filter(p => !p.sold);
+      const sold = group.filter(p => p.sold);
+      const spent = group.reduce((s,p) => s + Number(p.buyPrice||0), 0);
+      const proceeds = sold.reduce((s,p) => s + netOfFee(p.salePrice), 0);
+      const netPL = proceeds - spent;
+      const marginPct = spent > 0 ? (netPL / spent) * 100 : null;
+      const plClass = netPL >= 0 ? 'pl-pos' : 'pl-neg';
+      const plStr = (netPL >= 0 ? '+' : '−') + fmt(Math.abs(netPL));
+      const marginStr = marginPct === null ? '—' : (marginPct >= 0 ? '+' : '−') + Math.abs(marginPct).toFixed(1) + '%';
+      const isExpanded = expandedBatch === name;
+
+      let detailHtml = '';
+      if(isExpanded){
+        const rows = group.slice().sort((a,b) => (b.buyDate||'').localeCompare(a.buyDate||'')).map(p => {
+          const pPl = p.sold ? netOfFee(p.salePrice) - Number(p.buyPrice||0) : null;
+          const pPlClass = pPl === null ? '' : (pPl >= 0 ? 'pl-pos' : 'pl-neg');
+          const pPlStr = pPl === null ? '—' : (pPl >= 0 ? '+' : '−') + fmt(Math.abs(pPl));
+          return `<tr>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${fmt(p.buyPrice)}</td>
+            <td>${p.sold ? 'Sold ' + fmt(p.salePrice) : 'Holding'}</td>
+            <td class="${pPlClass}">${pPlStr}</td>
+          </tr>`;
+        }).join('');
+        detailHtml = `<div class="batch-detail">
+          <table><thead><tr><th>Player</th><th>Buy</th><th>Status</th><th>P/L</th></tr></thead>
+          <tbody>${rows}</tbody></table>
+        </div>`;
+
+        const timeline = computeRecoupTimeline(group);
+        if(timeline){
+          detailHtml += `<div class="recoup-timeline">
+            <div class="recoup-title">Recoup timeline <span class="recoup-note">— % of this group's total spend recovered, measured from the earliest buy date. Day-level precision (exact hour isn't tracked for manual/imported buys).</span></div>
+            <div class="recoup-row">
+              ${timeline.map(cp => `
+                <div class="recoup-cell">
+                  <div class="recoup-label">${cp.label}${cp.reached ? '' : ' <span class="recoup-pending">(ongoing)</span>'}</div>
+                  <div class="recoup-value ${cp.pct >= 100 ? 'pl-pos' : ''}">${cp.pct.toFixed(0)}%</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>`;
+        }
+      }
+
+      return `
+        <div class="batch-card ${isExpanded ? 'expanded' : ''}" data-batch="${escapeHtml(name)}">
+          <div class="batch-name">
+            <span>${escapeHtml(name)}</span>
+            <span class="batch-name-actions">
+              ${name !== 'Unsorted' ? `<button class="batch-remove-all" data-rename-batch="${escapeHtml(name)}" title="Rename this group">rename</button>` : ''}
+              <button class="batch-remove-all" data-remove-batch="${escapeHtml(name)}" title="Remove all players in this group">remove all</button>
+              <span style="font-size:10px;color:var(--muted-2);font-family:'JetBrains Mono',monospace;">${isExpanded ? '▲' : '▼'}</span>
+            </span>
+          </div>
+          <div class="batch-meta">${held.length} held · ${sold.length} sold · ${fmt(spent)} total spent</div>
+          <div class="batch-stats">
+            <div><span class="label">Net P/L</span><span class="${plClass}">${plStr}</span></div>
+            <div><span class="label">Margin</span><span class="${plClass}">${marginStr}</span></div>
+          </div>
+          ${detailHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderPositions(players){
+    const container = el('position-grid');
+    const countEl = el('position-count');
+    if(!container || !countEl) return;
+
+    if(players.length === 0){
+      countEl.textContent = '0 groups';
+      container.innerHTML = '<div class="batch-empty">Tag purchases with a position (via manual entry or CSV import) to see performance broken down by role here.</div>';
+      return;
+    }
+
+    const groups = {};
+    players.forEach(p => {
+      const key = (p.position || '').trim().toUpperCase() || 'Unspecified';
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    const names = Object.keys(groups).sort((a,b) => {
+      if(a === 'Unspecified') return 1;
+      if(b === 'Unspecified') return -1;
+      return a.localeCompare(b);
+    });
+    countEl.textContent = names.length + (names.length === 1 ? ' group' : ' groups');
+
+    const rows = names.map(name => {
+      const group = groups[name];
+      const held = group.filter(p => !p.sold);
+      const sold = group.filter(p => p.sold);
+      const spent = group.reduce((s,p) => s + Number(p.buyPrice||0), 0);
+      const proceeds = sold.reduce((s,p) => s + netOfFee(p.salePrice), 0);
+      const netPL = proceeds - spent;
+      const marginPct = spent > 0 ? (netPL/spent)*100 : null;
+      const plClass = netPL >= 0 ? 'pl-pos' : 'pl-neg';
+      const plStr = (netPL >= 0 ? '+' : '−') + fmt(Math.abs(netPL));
+      const marginStr = marginPct === null ? '—' : (marginPct >= 0 ? '+' : '−') + Math.abs(marginPct).toFixed(1) + '%';
+      const winners = sold.filter(p => netOfFee(p.salePrice) - Number(p.buyPrice||0) > 0).length;
+      const winRateStr = sold.length ? Math.round((winners/sold.length)*100) + '%' : '—';
+      return `<tr>
+        <td>${escapeHtml(name)}</td>
+        <td>${held.length}</td>
+        <td>${sold.length}</td>
+        <td class="mono">${fmt(spent)}</td>
+        <td class="mono ${plClass}">${plStr}</td>
+        <td class="mono ${plClass}">${marginStr}</td>
+        <td>${winRateStr}</td>
+      </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>Position</th><th>Held</th><th>Sold</th><th>Spent</th><th>Net P/L</th><th>Margin</th><th>Win rate</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function updateBatchDatalist(players){
+    const names = Array.from(new Set(players.map(p => (p.batch||'').trim()).filter(Boolean))).sort();
+    el('batch-list').innerHTML = names.map(n => `<option value="${escapeHtml(n)}">`).join('');
+  }
+
+  function escapeHtml(str){
+    return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  // Add player
+  el('btn-add').addEventListener('click', async () => {
+    const name = el('in-name').value.trim();
+    const playerId = el('in-id').value.trim();
+    const position = el('in-position').value.trim().toUpperCase();
+    const buyPrice = parseFloat(el('in-price').value);
+    const buyDate = el('in-date').value || new Date().toISOString().slice(0,10);
+    const batch = el('in-batch').value.trim();
+
+    if(!name){ showToast('Enter a player name'); el('in-name').focus(); return; }
+    if(isNaN(buyPrice) || buyPrice < 0){ showToast('Enter a valid buy price'); el('in-price').focus(); return; }
+
+    players.push({
+      id: uid(),
+      name, playerId, position, buyPrice, buyDate, batch,
+      sold: false, salePrice: null, saleDate: null
+    });
+    await savePlayers();
+    render();
+    showToast(`Added ${name}`);
+    el('in-name').value = '';
+    el('in-id').value = '';
+    el('in-position').value = '';
+    el('in-price').value = '';
+    el('in-date').value = '';
+    el('in-batch').value = '';
+    el('in-name').focus();
+  });
+
+  // Delegate clicks for sell / remove
+  document.addEventListener('click', async (e) => {
+    const sellBtn = e.target.closest('[data-sell]');
+    const editBtn = e.target.closest('[data-edit]');
+    const removeBtn = e.target.closest('[data-remove]');
+    const removeBatchBtn = e.target.closest('[data-remove-batch]');
+    const renameBatchBtn = e.target.closest('[data-rename-batch]');
+    if(renameBatchBtn){
+      const name = renameBatchBtn.getAttribute('data-rename-batch');
+      const newName = prompt(`Rename "${name}" to:`, name);
+      if(newName && newName.trim() && newName.trim() !== name){
+        const trimmed = newName.trim();
+        players.forEach(p => {
+          if(((p.batch||'').trim() || 'Unsorted') === name) p.batch = trimmed;
+        });
+        if(expandedBatch === name) expandedBatch = trimmed;
+        await savePlayers();
+        render();
+        showToast(`Renamed "${name}" to "${trimmed}"`);
+      }
+      return;
+    }
+    if(sellBtn){
+      sellTargetId = sellBtn.getAttribute('data-sell');
+      const p = players.find(pl => pl.id === sellTargetId);
+      if(!p) return;
+      el('sell-player-name').textContent = p.name + (p.playerId ? ' · ID ' + p.playerId : '') + ' — bought at ' + fmt(p.buyPrice);
+      el('in-sale-price').value = '';
+      el('in-sale-date').value = new Date().toISOString().slice(0,10);
+      el('sell-overlay').classList.remove('hidden');
+      el('in-sale-price').focus();
+      return;
+    }
+    if(editBtn){
+      editTargetId = editBtn.getAttribute('data-edit');
+      const p = players.find(pl => pl.id === editTargetId);
+      if(!p) return;
+      el('edit-name').value = p.name || '';
+      el('edit-id').value = p.playerId || '';
+      el('edit-position').value = p.position || '';
+      el('edit-overall').value = p.overall != null ? p.overall : '';
+      el('edit-age').value = p.age != null ? p.age : '';
+      el('edit-retirement').value = p.retirementYears != null ? p.retirementYears : '';
+      el('edit-price').value = p.buyPrice != null ? p.buyPrice : '';
+      el('edit-date').value = (p.buyDate || '').slice(0,10);
+      el('edit-batch').value = p.batch || '';
+      if(p.sold){
+        el('edit-sale-fields').classList.remove('hidden');
+        el('edit-sale-price').value = p.salePrice != null ? p.salePrice : '';
+        el('edit-sale-date').value = (p.saleDate || '').slice(0,10);
+      } else {
+        el('edit-sale-fields').classList.add('hidden');
+      }
+      el('edit-overlay').classList.remove('hidden');
+      el('edit-name').focus();
+      return;
+    }
+    if(removeBtn){
+      const id = removeBtn.getAttribute('data-remove');
+      const p = players.find(pl => pl.id === id);
+      if(!p) return;
+      const ok = confirm(`Remove ${p.name}? This can't be undone.`);
+      if(!ok) return;
+      players = players.filter(pl => pl.id !== id);
+      await savePlayers();
+      render();
+      showToast(`Removed ${p.name}`);
+      return;
+    }
+    if(removeBatchBtn){
+      const name = removeBatchBtn.getAttribute('data-remove-batch');
+      const inGroup = players.filter(p => ((p.batch||'').trim() || 'Unsorted') === name);
+      const ok = confirm(`Remove all ${inGroup.length} player${inGroup.length===1?'':'s'} in "${name}"? This can't be undone.`);
+      if(ok){
+        players = players.filter(p => ((p.batch||'').trim() || 'Unsorted') !== name);
+        if(expandedBatch === name) expandedBatch = null;
+        await savePlayers();
+        render();
+        showToast(`Removed ${inGroup.length} player${inGroup.length===1?'':'s'} from "${name}"`);
+      }
+      return;
+    }
+    const batchCard = e.target.closest('[data-batch]');
+    if(batchCard){
+      const name = batchCard.getAttribute('data-batch');
+      expandedBatch = (expandedBatch === name) ? null : name;
+      render();
+    }
+  });
+
+  el('btn-cancel-sell').addEventListener('click', () => {
+    el('sell-overlay').classList.add('hidden');
+    sellTargetId = null;
+  });
+
+  el('btn-confirm-sell').addEventListener('click', async () => {
+    const salePrice = parseFloat(el('in-sale-price').value);
+    const saleDate = el('in-sale-date').value || new Date().toISOString().slice(0,10);
+    if(isNaN(salePrice) || salePrice < 0){ showToast('Enter a valid sale price'); el('in-sale-price').focus(); return; }
+
+    const p = players.find(pl => pl.id === sellTargetId);
+    if(p){
+      p.sold = true;
+      p.salePrice = salePrice;
+      p.saleDate = saleDate;
+      await savePlayers();
+      render();
+      showToast(`${p.name} marked sold`);
+    }
+    el('sell-overlay').classList.add('hidden');
+    sellTargetId = null;
+  });
+
+  el('sell-overlay').addEventListener('click', (e) => {
+    if(e.target.id === 'sell-overlay'){
+      el('sell-overlay').classList.add('hidden');
+      sellTargetId = null;
+    }
+  });
+
+  el('btn-cancel-edit').addEventListener('click', () => {
+    el('edit-overlay').classList.add('hidden');
+    editTargetId = null;
+  });
+
+  el('edit-overlay').addEventListener('click', (e) => {
+    if(e.target.id === 'edit-overlay'){
+      el('edit-overlay').classList.add('hidden');
+      editTargetId = null;
+    }
+  });
+
+  el('btn-confirm-edit').addEventListener('click', async () => {
+    const p = players.find(pl => pl.id === editTargetId);
+    if(!p){ el('edit-overlay').classList.add('hidden'); return; }
+
+    const name = el('edit-name').value.trim();
+    const buyPrice = parseFloat(el('edit-price').value);
+    if(!name){ showToast('Enter a player name'); el('edit-name').focus(); return; }
+    if(isNaN(buyPrice) || buyPrice < 0){ showToast('Enter a valid buy price'); el('edit-price').focus(); return; }
+
+    p.name = name;
+    p.playerId = el('edit-id').value.trim();
+    p.position = el('edit-position').value.trim().toUpperCase();
+    const overallVal = parseFloat(el('edit-overall').value);
+    const ageVal = parseFloat(el('edit-age').value);
+    const retirementVal = parseFloat(el('edit-retirement').value);
+    p.overall = isNaN(overallVal) ? null : overallVal;
+    p.age = isNaN(ageVal) ? null : ageVal;
+    p.retirementYears = isNaN(retirementVal) ? null : retirementVal;
+    p.buyPrice = buyPrice;
+    p.buyDate = el('edit-date').value || p.buyDate;
+    p.batch = el('edit-batch').value.trim();
+
+    if(p.sold){
+      const salePrice = parseFloat(el('edit-sale-price').value);
+      if(isNaN(salePrice) || salePrice < 0){ showToast('Enter a valid sale price'); el('edit-sale-price').focus(); return; }
+      p.salePrice = salePrice;
+      p.saleDate = el('edit-sale-date').value || p.saleDate;
+      p.autoDetected = false; // manually edited, no longer purely auto-detected
+    }
+
+    await savePlayers();
+    render();
+    showToast(`Updated ${p.name}`);
+    el('edit-overlay').classList.add('hidden');
+    editTargetId = null;
+  });
+
+  // ---------- Import CSV ----------
+  let parsedImportRows = null; // rows ready to commit after preview
+
+  function detectDelimiter(text){
+    const firstLine = text.split(/\r?\n/, 1)[0] || '';
+    const candidates = [',', '\t', ';'];
+    let best = ',', bestCount = 0;
+    for(const d of candidates){
+      const count = firstLine.split(d).length - 1;
+      if(count > bestCount){ bestCount = count; best = d; }
+    }
+    return best;
+  }
+
+  function parseCsvText(text){
+    // Minimal delimited-text parser: handles quoted fields with embedded
+    // delimiters/quotes, and auto-detects comma vs tab vs semicolon —
+    // pasting straight from a spreadsheet grid (e.g. Excel/Numbers/Sheets)
+    // produces tab-separated text, not commas.
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM if present
+    const delim = detectDelimiter(text);
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for(let i = 0; i < text.length; i++){
+      const c = text[i], next = text[i+1];
+      if(inQuotes){
+        if(c === '"' && next === '"'){ field += '"'; i++; }
+        else if(c === '"'){ inQuotes = false; }
+        else { field += c; }
+      } else {
+        if(c === '"'){ inQuotes = true; }
+        else if(c === delim){ row.push(field); field = ''; }
+        else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+        else if(c === '\r'){ /* skip */ }
+        else { field += c; }
+      }
+    }
+    if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(cell => cell.trim() !== ''));
+  }
+
+  const HEADER_ALIASES = {
+    name: ['name','player','player name'],
+    playerId: ['player id','id','mfl id','playerid'],
+    // "value" is MFL's own export column for what you actually paid (their
+    // "Price" column there is a self-assigned valuation, not cost — so
+    // "price" is deliberately NOT included here to avoid mis-mapping it).
+    buyPrice: ['buy price','price paid','buy','cost','purchase price','value'],
+    buyDate: ['buy date','purchase date','date bought','date','joinedagency','joined agency'],
+    sold: ['sold','status'],
+    salePrice: ['sale price','sold price','sell price'],
+    saleDate: ['sale date','sold date','date sold'],
+    batch: ['batch','agency','group','bracket','source'],
+    position: ['position','positions','pos','position1','position 1'],
+    overall: ['overall'],
+    age: ['age'],
+    retirementYears: ['seasonsuntilretirement','retirementyears']
+  };
+
+  function normalizeHeader(h){
+    return h.trim().toLowerCase().replace(/\s+/g,' ');
+  }
+
+  function matchHeaders(headerRow){
+    const map = {}; // field -> column index
+    let firstNameIdx = null, lastNameIdx = null;
+    headerRow.forEach((h, idx) => {
+      const norm = normalizeHeader(h);
+      if(norm === 'firstname' || norm === 'first name') firstNameIdx = idx;
+      if(norm === 'lastname' || norm === 'last name') lastNameIdx = idx;
+      for(const [field, aliases] of Object.entries(HEADER_ALIASES)){
+        if(aliases.includes(norm) && !(field in map)){
+          map[field] = idx;
+        }
+      }
+    });
+    // MFL's own export splits the player name into firstName/lastName
+    // columns rather than one "name" column — combine them automatically.
+    if(map.name === undefined && (firstNameIdx !== null || lastNameIdx !== null)){
+      map._firstNameIdx = firstNameIdx;
+      map._lastNameIdx = lastNameIdx;
+    }
+    return map;
+  }
+
+  function parseMoney(v){
+    if(v == null) return NaN;
+    const cleaned = String(v).replace(/[^0-9.\-]/g, '');
+    if(cleaned === '') return NaN;
+    return Number(cleaned);
+  }
+
+  function parseDateFlexible(v){
+    if(!v) return '';
+    const s = String(v).trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const d = new Date(s);
+    if(isNaN(d)) return '';
+    return d.toISOString().slice(0,10);
+  }
+
+  function parseBool(v){
+    if(v == null) return false;
+    const s = String(v).trim().toLowerCase();
+    return ['yes','y','true','1','sold'].includes(s);
+  }
+
+  function runImportPreview(){
+    const text = el('in-csv').value;
+    const rows = parseCsvText(text);
+    const previewEl = el('import-preview');
+    const confirmBtn = el('btn-confirm-import');
+
+    if(rows.length < 2){
+      previewEl.classList.remove('hidden');
+      previewEl.innerHTML = '<div class="import-summary">Paste a header row plus at least one data row.</div>';
+      confirmBtn.classList.add('hidden');
+      parsedImportRows = null;
+      return;
+    }
+
+    const map = matchHeaders(rows[0]);
+    const hasName = map.name !== undefined || map._firstNameIdx !== undefined;
+    if(!hasName || map.buyPrice === undefined){
+      previewEl.classList.remove('hidden');
+      previewEl.innerHTML = '<div class="import-summary" style="color:var(--loss)">Could not find required "name" (or firstName/lastName) and "buy price" (or "value") columns. Check your headers against the list above.</div>';
+      confirmBtn.classList.add('hidden');
+      parsedImportRows = null;
+      return;
+    }
+
+    const dataRows = rows.slice(1);
+    const parsed = [];
+    let errorCount = 0;
+
+    dataRows.forEach((r, i) => {
+      const get = (field) => map[field] !== undefined ? (r[map[field]] || '').trim() : '';
+      const name = map.name !== undefined
+        ? get('name')
+        : [
+            map._firstNameIdx !== null ? (r[map._firstNameIdx] || '').trim() : '',
+            map._lastNameIdx !== null ? (r[map._lastNameIdx] || '').trim() : ''
+          ].filter(Boolean).join(' ');
+      const buyPrice = parseMoney(get('buyPrice'));
+      const isSold = parseBool(get('sold')) || get('salePrice').trim() !== '';
+      const salePrice = isSold ? parseMoney(get('salePrice')) : null;
+
+      const rowErrors = [];
+      if(!name) rowErrors.push('missing name');
+      if(isNaN(buyPrice)) rowErrors.push('invalid buy price');
+      if(isSold && (salePrice === null || isNaN(salePrice))) rowErrors.push('missing/invalid sale price');
+
+      const playerId = get('playerId');
+      const position = get('position').toUpperCase();
+      const overallRaw = get('overall');
+      const ageRaw = get('age');
+      const retirementRaw = get('retirementYears');
+      const overall = overallRaw ? parseFloat(overallRaw) : null;
+      const age = ageRaw ? parseFloat(ageRaw) : null;
+      const retirementYears = retirementRaw ? parseFloat(retirementRaw) : null;
+      const buyDateParsed = parseDateFlexible(get('buyDate'));
+      if(playerId && !isNaN(buyPrice)){
+        const isDuplicateOfExisting = players.some(existing =>
+          existing.playerId && existing.playerId === playerId &&
+          existing.buyDate === buyDateParsed &&
+          Math.abs(Number(existing.buyPrice||0) - buyPrice) < 0.01
+        );
+        const isDuplicateInBatch = parsed.some(prior =>
+          prior.playerId && prior.playerId === playerId &&
+          prior.buyDate === buyDateParsed &&
+          Math.abs(Number(prior.buyPrice||0) - buyPrice) < 0.01
+        );
+        if(isDuplicateOfExisting) rowErrors.push('already imported (same player ID, buy date, and price)');
+        else if(isDuplicateInBatch) rowErrors.push('duplicate row within this file');
+      }
+
+      parsed.push({
+        name, playerId, position,
+        overall: (overall != null && !isNaN(overall)) ? overall : null,
+        age: (age != null && !isNaN(age)) ? age : null,
+        retirementYears: (retirementYears != null && !isNaN(retirementYears) && retirementYears > 0) ? retirementYears : null,
+        buyPrice: isNaN(buyPrice) ? null : buyPrice,
+        buyDate: buyDateParsed,
+        sold: isSold,
+        salePrice: (isSold && !isNaN(salePrice)) ? salePrice : null,
+        saleDate: isSold ? parseDateFlexible(get('saleDate')) : '',
+        batch: get('batch'),
+        errors: rowErrors
+      });
+      if(rowErrors.length) errorCount++;
+    });
+
+    parsedImportRows = parsed.filter(p => p.errors.length === 0);
+
+    const validCount = parsed.length - errorCount;
+    let html = '<table><thead><tr><th>Name</th><th>Player ID</th><th>Pos</th><th>Batch</th><th>Buy</th><th>Bought</th><th>Sold?</th><th>Sale</th><th>Sold date</th></tr></thead><tbody>';
+    parsed.slice(0, 200).forEach(p => {
+      const cls = p.errors.length ? 'row-error' : '';
+      html += `<tr class="${cls}">
+        <td>${escapeHtml(p.name || '(missing)')}</td>
+        <td>${escapeHtml(p.playerId || '—')}</td>
+        <td>${escapeHtml(p.position || '—')}</td>
+        <td>${escapeHtml(p.batch || '—')}</td>
+        <td>${p.buyPrice === null ? '—' : fmt(p.buyPrice)}</td>
+        <td>${p.buyDate || '—'}</td>
+        <td>${p.sold ? 'Yes' : 'No'}</td>
+        <td>${p.salePrice === null ? '—' : fmt(p.salePrice)}</td>
+        <td>${p.saleDate || '—'}</td>
+      </tr>`;
+      if(p.errors.length) html += `<tr class="row-error"><td colspan="9" style="padding-top:0;font-size:10px;">↳ ${p.errors.join(', ')} — this row will be skipped</td></tr>`;
+    });
+    html += '</tbody></table>';
+    html += `<div class="import-summary">${validCount} row${validCount===1?'':'s'} ready to import${errorCount ? ', ' + errorCount + ' will be skipped (errors above)' : ''}.</div>`;
+
+    previewEl.classList.remove('hidden');
+    previewEl.innerHTML = html;
+    confirmBtn.classList.toggle('hidden', validCount === 0);
+  }
+
+  function closeImportModal(){
+    el('import-overlay').classList.add('hidden');
+    el('in-csv').value = '';
+    el('in-csv-file').value = '';
+    el('import-preview').classList.add('hidden');
+    el('import-preview').innerHTML = '';
+    el('btn-confirm-import').classList.add('hidden');
+    parsedImportRows = null;
+  }
+
+  el('btn-import').addEventListener('click', () => {
+    el('import-overlay').classList.remove('hidden');
+  });
+
+  el('in-csv-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      el('in-csv').value = reader.result;
+      runImportPreview();
+    };
+    reader.onerror = () => showToast('Could not read that file');
+    reader.readAsText(file);
+  });
+
+  // Shared by both the file-upload path and pasting raw CSV text directly
+  // into the textarea — returns {ids, context} or null if the text doesn't
+  // look like a usable player CSV (missing id/overall/age columns).
+  function parseBulkCsvText(text){
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const rows = parseCsvText(text);
+    if(rows.length < 2) return null;
+
+    const header = rows[0].map(normalizeHeader);
+    const findCol = (names) => {
+      for(const n of names){
+        const i = header.indexOf(n);
+        if(i !== -1) return i;
+      }
+      return -1;
+    };
+    const iId = findCol(['id','player id','playerid']);
+    const iFirst = findCol(['firstname','first name']);
+    const iLast = findCol(['lastname','last name']);
+    const iOverall = findCol(['overall']);
+    const iAge = findCol(['age']);
+    const iPos1 = findCol(['position1','position 1']);
+    const iRetire = findCol(['seasonsuntilretirement','retirementyears']);
+    const iClubId = findCol(['clubid','club id']);
+    const iClubName = findCol(['clubname','club name']);
+
+    if(iId === -1 || iOverall === -1 || iAge === -1) return null;
+
+    const context = {};
+    const ids = [];
+    rows.slice(1).forEach(r => {
+      const playerId = (r[iId] || '').trim();
+      if(!playerId) return;
+      const overall = parseFloat(r[iOverall]);
+      const age = parseFloat(r[iAge]);
+      if(isNaN(overall) || isNaN(age)) return;
+
+      const position = iPos1 !== -1 ? (r[iPos1] || '').trim().toUpperCase() : '';
+      const retireRaw = iRetire !== -1 ? (r[iRetire] || '').trim() : '';
+      const retireNum = retireRaw ? parseFloat(retireRaw) : NaN;
+      const retirementYears = !isNaN(retireNum) && retireNum > 0 ? retireNum : null;
+      const clubVal = ((iClubId !== -1 ? r[iClubId] : '') || (iClubName !== -1 ? r[iClubName] : '') || '').trim();
+      const isFreeAgent = !clubVal;
+      const name = [iFirst !== -1 ? r[iFirst] : '', iLast !== -1 ? r[iLast] : ''].filter(Boolean).join(' ').trim();
+
+      ids.push(playerId);
+      context[playerId] = { playerId, age, overall, position: position || undefined, retirementYears, isFreeAgent, name: name || undefined };
+    });
+
+    if(ids.length === 0) return null;
+    return { ids, context };
+  }
+
+  el('in-floor-bulk-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = parseBulkCsvText(reader.result);
+      if(!result){
+        showToast('Could not find id/overall/age columns in that file');
+        return;
+      }
+      bulkCsvContext = result.context;
+      suppressNextBulkClear = true;
+      el('in-floor-bulk').value = result.ids.join('\n');
+      showToast(`Loaded ${result.ids.length} player${result.ids.length === 1 ? '' : 's'} from CSV with full stats — no lookup needed`);
+    };
+    reader.onerror = () => showToast('Could not read that file');
+    reader.readAsText(file);
+  });
+
+  let suppressNextBulkClear = false;
+
+  el('in-floor-bulk').addEventListener('paste', (e) => {
+    setTimeout(() => {
+      const text = el('in-floor-bulk').value;
+      const result = parseBulkCsvText(text);
+      if(result){
+        bulkCsvContext = result.context;
+        suppressNextBulkClear = true;
+        el('in-floor-bulk').value = result.ids.join('\n');
+        showToast(`Detected a CSV paste — loaded ${result.ids.length} player${result.ids.length === 1 ? '' : 's'} with full stats`);
+      }
+      // If it didn't parse as CSV (e.g. genuinely just a list of IDs),
+      // leave it as plain text — the normal 'input' handler below will
+      // treat it as an ID list, which is the correct fallback.
+    }, 0);
+  });
+
+  el('in-floor-bulk').addEventListener('input', () => {
+    // If the list is hand-edited (or freshly pasted as plain IDs) after a
+    // CSV import, the context no longer reliably matches — fall back to
+    // ID-only resolution to stay safe. Skipped right after we've just
+    // auto-loaded CSV context ourselves, above.
+    if(suppressNextBulkClear){ suppressNextBulkClear = false; return; }
+    bulkCsvContext = null;
+  });
+
+  el('btn-cancel-import').addEventListener('click', closeImportModal);
+
+  el('import-overlay').addEventListener('click', (e) => {
+    if(e.target.id === 'import-overlay') closeImportModal();
+  });
+
+  el('btn-preview-import').addEventListener('click', runImportPreview);
+
+  el('btn-confirm-import').addEventListener('click', async () => {
+    if(!parsedImportRows || parsedImportRows.length === 0) return;
+    const newPlayers = parsedImportRows.map(p => ({
+      id: uid(),
+      name: p.name,
+      playerId: p.playerId || '',
+      position: p.position || '',
+      overall: p.overall,
+      age: p.age,
+      retirementYears: p.retirementYears,
+      buyPrice: p.buyPrice,
+      buyDate: p.buyDate,
+      sold: p.sold,
+      salePrice: p.salePrice,
+      saleDate: p.saleDate,
+      batch: p.batch || '',
+      autoDetected: false
+    }));
+    players = players.concat(newPlayers);
+    await savePlayers();
+    render();
+    showToast(newPlayers.length + ' player' + (newPlayers.length===1?'':'s') + ' imported');
+    closeImportModal();
+  });
+
+  // Export CSV
+  el('btn-export').addEventListener('click', () => {
+    if(players.length === 0){ showToast('Nothing to export yet'); return; }
+    const header = ['Name','Player ID','Position','Buy Price','Buy Date','Sold','Sale Price (gross)','Sale Date','Profit/Loss (after 5% fee)','Margin %','Batch'];
+    const rows = players.map(p => {
+      // Matches the in-app P/L: sale proceeds net of MFL's 5% fee minus buy
+      // price, kept consistent with every other P/L figure shown on-screen.
+      const buyPriceNum = Number(p.buyPrice||0);
+      const pl = p.sold ? (netOfFee(p.salePrice) - buyPriceNum) : null;
+      const marginPct = (p.sold && buyPriceNum > 0) ? (pl / buyPriceNum) * 100 : null;
+      return [
+        p.name,
+        p.playerId || '',
+        p.position || '',
+        buyPriceNum.toFixed(2),
+        p.buyDate || '',
+        p.sold ? 'Yes' : 'No',
+        p.sold ? Number(p.salePrice).toFixed(2) : '',
+        p.sold ? p.saleDate : '',
+        pl !== null ? pl.toFixed(2) : '',
+        marginPct !== null ? marginPct.toFixed(1) : '',
+        p.batch || ''
+      ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+    });
+    const csv = [header.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mfl-squad-ledger-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('CSV exported');
+  });
+
+  // Full-fidelity JSON backup/restore — a safety net independent of CSV
+  // (which loses nothing important today, but this guards against future
+  // field additions) and independent of cloud sync (protects against a
+  // relay outage or account issue wiping out access to your data).
+  el('btn-backup-json').addEventListener('click', () => {
+    if(players.length === 0){ showToast('Nothing to back up yet'); return; }
+    const payload = { version: 1, exportedAt: new Date().toISOString(), players };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mfl-squad-ledger-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Backup downloaded');
+  });
+
+  el('btn-restore-json').addEventListener('click', () => {
+    el('in-restore-json').click();
+  });
+
+  el('in-restore-json').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let parsed;
+      try{
+        parsed = JSON.parse(reader.result);
+      }catch(err){
+        showToast('That file is not valid JSON');
+        e.target.value = '';
+        return;
+      }
+      const incoming = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.players) ? parsed.players : null);
+      if(!incoming){
+        showToast('Could not find a players list in that file');
+        e.target.value = '';
+        return;
+      }
+      const ok = confirm(`Replace all ${players.length} current player(s) with ${incoming.length} from this backup? This can't be undone.`);
+      if(ok){
+        players = incoming.map(p => ({
+          id: p.id || uid(),
+          name: p.name || '',
+          playerId: p.playerId || '',
+          position: p.position || '',
+          buyPrice: p.buyPrice != null ? Number(p.buyPrice) : 0,
+          buyDate: p.buyDate || '',
+          batch: p.batch || '',
+          sold: !!p.sold,
+          salePrice: p.salePrice != null ? Number(p.salePrice) : null,
+          saleDate: p.saleDate || null,
+          autoDetected: !!p.autoDetected
+        }));
+        await savePlayers();
+        render();
+        showToast(`Restored ${players.length} player(s) from backup`);
+      }
+      e.target.value = '';
+    };
+    reader.onerror = () => { showToast('Could not read that file'); e.target.value = ''; };
+    reader.readAsText(file);
+  });
+
+  // Enter key support on add form
+  ['in-name','in-id','in-price','in-date'].forEach(id => {
+    el(id).addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') el('btn-add').click();
+    });
+  });
+  el('in-sale-price').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') el('btn-confirm-sell').click();
+  });
+
+  el('in-wallet').addEventListener('change', async () => {
+    const addr = el('in-wallet').value.trim();
+    await saveWallet(addr);
+    if(autosyncOn && addr) startAutosync();
+    if(addr && !loggedIn && !el('in-account-user').value.trim()){
+      el('in-account-user').value = addr;
+    }
+  });
+
+  el('in-autosync').addEventListener('change', async () => {
+    const on = el('in-autosync').checked;
+    await saveAutosync(on);
+    if(on){
+      if(!walletAddress){
+        showToast('Add your wallet address first');
+        el('in-autosync').checked = false;
+        autosyncOn = false;
+        await saveAutosync(false);
+        return;
+      }
+      startAutosync();
+    } else {
+      stopAutosync();
+      setSyncStatus(null, 'Auto-sync off');
+    }
+  });
+
+  el('btn-test-conn').addEventListener('click', async () => {
+    setSyncStatus('checking', 'Testing outbound connection…');
+    try{
+      const res = await fetch('https://jsonplaceholder.typicode.com/todos/1', { headers: { 'Accept': 'application/json' } });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      setSyncStatus('live', 'Outbound fetch WORKS (got test data back fine) — issue is specific to the MFL/relay URLs');
+    }catch(e){
+      const msg = (e && e.message) ? e.message : String(e);
+      setSyncStatus('error', 'Outbound fetch BLOCKED entirely here: "' + msg + '" — this preview window cannot make any external network calls');
+    }
+  });
+
+  el('btn-check-now').addEventListener('click', () => {
+    if(!el('in-wallet').value.trim()){
+      showToast('Add your wallet address first');
+      return;
+    }
+    checkForSales();
+  });
+
+  el('btn-account-login').addEventListener('click', async () => {
+    const username = el('in-account-user').value.trim();
+    const password = el('in-account-pass').value;
+    if(!username || !password){ showToast('Enter a username and password'); return; }
+    setAccountStatus('checking', 'Logging in…');
+    const result = await tryLogin(username, password);
+    if(!result.ok){
+      setAccountStatus('error', result.error);
+    }
+  });
+
+  el('btn-account-register').addEventListener('click', async () => {
+    const username = el('in-account-user').value.trim();
+    const password = el('in-account-pass').value;
+    if(!username || username.length < 3){ showToast('Username needs to be at least 3 characters'); return; }
+    if(!password || password.length < 4){ showToast('Password needs to be at least 4 characters'); return; }
+    setAccountStatus('checking', 'Creating account…');
+    try{
+      const res = await fetch(REGISTER_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const body = await res.json();
+      if(!res.ok){
+        setAccountStatus('error', body.error || ('HTTP ' + res.status));
+        return;
+      }
+      // Registered — now log in, which will push this device's current data up.
+      const result = await tryLogin(username, password);
+      if(!result.ok) setAccountStatus('error', result.error);
+    }catch(err){
+      setAccountStatus('error', 'Could not reach the server — network error.');
+    }
+  });
+
+  el('btn-account-logout').addEventListener('click', async () => {
+    setLoggedOutUI();
+    try{ await store.set(ACCOUNT_USER_KEY, ''); }catch(e){}
+    try{ await store.set(ACCOUNT_PASS_KEY, ''); }catch(e){}
+    setAccountStatus(null, 'Logged out. Data stays on this device until you log in.');
+  });
+
+  el('btn-account-show-change-pass').addEventListener('click', () => {
+    el('change-pass-row').classList.remove('hidden');
+    el('in-old-pass').focus();
+  });
+
+  el('btn-cancel-change-pass').addEventListener('click', () => {
+    el('change-pass-row').classList.add('hidden');
+    el('in-old-pass').value = '';
+    el('in-new-pass').value = '';
+  });
+
+  el('btn-confirm-change-pass').addEventListener('click', async () => {
+    const oldPassword = el('in-old-pass').value;
+    const newPassword = el('in-new-pass').value;
+    if(!oldPassword){ showToast('Enter your current password'); return; }
+    if(!newPassword || newPassword.length < 4){ showToast('New password needs to be at least 4 characters'); return; }
+
+    setAccountStatus('checking', 'Updating password…');
+    try{
+      const res = await fetch(CHANGE_PASS_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username: accountUsername, oldPassword, newPassword })
+      });
+      const body = await res.json();
+      if(!res.ok){
+        setAccountStatus('error', body.error || ('HTTP ' + res.status));
+        return;
+      }
+      accountPassword = newPassword;
+      await store.set(ACCOUNT_PASS_KEY, newPassword);
+      el('change-pass-row').classList.add('hidden');
+      el('in-old-pass').value = '';
+      el('in-new-pass').value = '';
+      setAccountStatus('live', 'Password updated.');
+      showToast('Password updated');
+    }catch(err){
+      setAccountStatus('error', 'Could not reach the server — network error.');
+    }
+  });
+
+  let searchDebounceTimer = null;
+  el('in-search').addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      searchQuery = el('in-search').value.trim();
+      render();
+    }, 150);
+  });
+
+  // Escape closes whichever modal is open (reuses each modal's own cancel
+  // logic so behavior matches clicking Cancel exactly). "/" jumps to search
+  // unless already typing somewhere else.
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      if(!el('sell-overlay').classList.contains('hidden')) el('btn-cancel-sell').click();
+      if(!el('edit-overlay').classList.contains('hidden')) el('btn-cancel-edit').click();
+      if(!el('import-overlay').classList.contains('hidden')) el('btn-cancel-import').click();
+      return;
+    }
+    if(e.key === '/'){
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if(tag !== 'INPUT' && tag !== 'TEXTAREA'){
+        e.preventDefault();
+        el('in-search').focus();
+      }
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const th = e.target.closest('th.sortable');
+    if(!th) return;
+    const table = th.getAttribute('data-sort-table');
+    const field = th.getAttribute('data-sort-field');
+    const state = sortState[table];
+    if(state.field === field){
+      state.dir = -state.dir;
+    } else {
+      state.field = field;
+      state.dir = 1;
+    }
+    render();
+  });
+
+  // Register service worker for install-to-homescreen support. Safely does
+  // nothing if unsupported (e.g. opened as a local file, or inside a
+  // sandboxed preview) — wrapped so it can never break the rest of the app.
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {
+        // Silently ignore — PWA install just won't be available here.
+      });
+    });
+  }
+
+  el('btn-find-comps').addEventListener('click', async () => {
+    const age = parseFloat(el('in-comp-age').value);
+    const overall = parseFloat(el('in-comp-overall').value);
+    const resultsEl = el('comps-results');
+
+    if(isNaN(age)){
+      showToast('Enter an age');
+      el('in-comp-age').focus();
+      return;
+    }
+    if(isNaN(overall)){
+      showToast('Enter an overall rating');
+      el('in-comp-overall').focus();
+      return;
+    }
+
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Checking recent comps…</div></div>';
+
+    try{
+      const res = await fetch(MARKET_COMPS_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ age, overall, maxAgeDays: 30 })
+      });
+      const body = await res.json();
+      if(!res.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(body.error || 'Could not fetch comps')}</div></div>`;
+        return;
+      }
+      renderCompsResults(body, age, overall);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  });
+
+  function renderCompsResults(data, age, overall){
+    const resultsEl = el('comps-results');
+    if(!data.count || data.count === 0){
+      resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty">No recent comps found for age ${age}, overall ${data.targetOverall != null ? data.targetOverall : overall-1} yet (sales under $8 excluded). Comps build up over time — check back later.</div></div>`;
+      return;
+    }
+
+    const rows = data.samples.map(s => `
+      <tr>
+        <td>${s.overall}</td>
+        <td>${escapeHtml((s.positions||[]).join('/'))}</td>
+        <td>${s.age != null ? s.age : '—'}</td>
+        <td class="mono">${fmt(s.price)}</td>
+        <td>${fmtDate(new Date(s.ts).toISOString())}</td>
+      </tr>
+    `).join('');
+
+    const sellTimeStr = data.avgDaysToSell != null
+      ? data.avgDaysToSell.toFixed(1) + 'd (n=' + data.sellTimeSampleSize + ')'
+      : 'not enough data yet';
+
+    resultsEl.innerHTML = `
+      <div class="comps-panel">
+        <div class="comps-summary">
+          <div class="stat"><span class="label">Comps found (age ${age}, overall ${data.targetOverall})</span><span class="value">${data.count}</span></div>
+          <div class="stat"><span class="label">Floor price</span><span class="value gold">${fmt(data.floor)}</span></div>
+          <div class="stat"><span class="label">Average</span><span class="value">${fmt(data.avg)}</span></div>
+          <div class="stat"><span class="label">Median</span><span class="value">${fmt(data.median)}</span></div>
+          <div class="stat"><span class="label">Your 70% target</span><span class="value gold">${fmt(data.suggestedTarget)}</span></div>
+          <div class="stat"><span class="label">Typical time to sell</span><span class="value">${sellTimeStr}</span></div>
+        </div>
+        <table class="comps-table">
+          <thead><tr><th>Overall</th><th>Positions</th><th>Age</th><th>Sold for</th><th>Date</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // ---------- Floor price lookup ----------
+  function parseFloorSearch(text){
+    const tokens = text.trim().split(/\s+/).filter(Boolean);
+    const nums = [];
+    let position = null;
+    for(const t of tokens){
+      if(/^\d+$/.test(t) && nums.length < 2) nums.push(Number(t));
+      else position = t.toUpperCase();
+    }
+    if(nums.length < 2) return null;
+    // First number is overall, second is age (matches the examples given: "75 24 ST")
+    return { overall: nums[0], age: nums[1], position };
+  }
+
+  async function runFloorSearch(){
+    const resultsEl = el('floor-results');
+    const text = el('in-floor-search').value;
+    const parsed = parseFloorSearch(text);
+    if(!parsed){
+      showToast('Enter overall and age, e.g. "75 24 ST" or "62 25"');
+      return;
+    }
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Checking live marketplace…</div></div>';
+    await fetchAndRenderFloor({ age: parsed.age, overall: parsed.overall, position: parsed.position });
+  }
+
+  async function runFloorPlayerIdLookup(){
+    const resultsEl = el('floor-results');
+    const playerId = el('in-floor-playerid').value.trim();
+    if(!playerId){
+      showToast('Enter a player ID');
+      return;
+    }
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Looking up player…</div></div>';
+    await fetchAndRenderFloor({ playerId });
+  }
+
+  async function fetchAndRenderFloor(params){
+    const resultsEl = el('floor-results');
+    try{
+      const [liveRes, histRes] = await Promise.all([
+        fetch(MARKET_LIVE_FLOOR_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) }),
+        fetch(MARKET_FLOOR_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) })
+      ]);
+      const liveBody = await liveRes.json();
+      const histBody = await histRes.json();
+
+      if(!liveRes.ok && !histRes.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(liveBody.error || histBody.error || 'Lookup failed')}</div></div>`;
+        return;
+      }
+      if(liveBody.found === false || histBody.found === false){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty">${escapeHtml((liveBody.found === false ? liveBody.message : histBody.message) || 'Not found')}</div></div>`;
+        return;
+      }
+      renderCombinedFloorResults(liveBody, histBody);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  }
+
+  function flagLabel(retirementYears){
+    if(retirementYears === 3) return 'Yellow flag (retiring in 3 seasons)';
+    if(retirementYears === 2) return 'Orange flag (retiring in 2 seasons)';
+    if(retirementYears === 1) return 'Red flag (retiring in 1 season)';
+    return null;
+  }
+
+  // ---------- Valuer ----------
+  async function runValuer(){
+    const age = parseFloat(el('in-valuer-age').value);
+    const overall = parseFloat(el('in-valuer-overall').value);
+    const position = el('in-valuer-position').value.trim().toUpperCase();
+    if(isNaN(age) || isNaN(overall) || !position){
+      showToast('Enter age, overall, and position');
+      return;
+    }
+    await fetchAndRenderValuer({ age, overall, position });
+  }
+
+  async function runValuerByPlayerId(){
+    const playerId = el('in-valuer-playerid').value.trim();
+    if(!playerId){
+      showToast('Enter a player ID');
+      return;
+    }
+    await fetchAndRenderValuer({ playerId });
+  }
+
+  // ---------- Price my listing (sell-side) ----------
+  async function runPriceListing(){
+    const age = parseFloat(el('in-price-age').value);
+    const overall = parseFloat(el('in-price-overall').value);
+    const position = el('in-price-position').value.trim().toUpperCase();
+    const resultsEl = el('price-listing-results');
+    if(isNaN(age) || isNaN(overall)){
+      showToast('Enter age and overall');
+      return;
+    }
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Checking live marketplace…</div></div>';
+    try{
+      const res = await fetch(MARKET_LIVE_FLOOR_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ age, overall, position: position || undefined, noAdjust: true })
+      });
+      const body = await res.json();
+      if(!res.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(body.error || 'Lookup failed')}</div></div>`;
+        return;
+      }
+      renderPriceListingResult(body, position);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  }
+
+  function renderPriceListingResult(data, position){
+    const resultsEl = el('price-listing-results');
+    const base = position && data.floor3 && data.floor3.floor != null ? data.floor3.floor : (data.floor1 ? data.floor1.floor : null);
+    if(base == null){
+      resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty">No live listings found for this exact profile to price against.</div></div>`;
+      return;
+    }
+    const points = [0, 0.05, 0.10, 0.20, 0.30].map(pct => {
+      const listPrice = base * (1 + pct);
+      return { pct, listPrice, net: netOfFee(listPrice) };
+    });
+    const rows = points.map(pt => `
+      <tr>
+        <td>${pt.pct === 0 ? 'At floor' : '+' + (pt.pct*100).toFixed(0) + '%'}</td>
+        <td class="mono">${fmt(pt.listPrice)}</td>
+        <td class="mono">${fmt(pt.net)}</td>
+      </tr>
+    `).join('');
+    resultsEl.innerHTML = `
+      <div class="comps-panel">
+        <div class="comps-summary">
+          <div class="stat"><span class="label">Current floor (exact overall${position ? ', position ' + escapeHtml(position) : ''})</span><span class="value gold">${fmt(base)}</span></div>
+        </div>
+      </div>
+      <div class="comps-panel" style="margin-top:10px;">
+        <table class="deals-table">
+          <thead><tr><th>List at</th><th>Price</th><th>You'd net (after 5% fee)</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function fetchAndRenderValuer(params){
+    const resultsEl = el('valuer-results');
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Checking live marketplace…</div></div>';
+    try{
+      const res = await fetch(MARKET_LIVE_FLOOR_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(params)
+      });
+      const body = await res.json();
+      if(!res.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(body.error || 'Lookup failed')}</div></div>`;
+        return;
+      }
+      if(body.found === false){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty">${escapeHtml(body.message)}</div></div>`;
+        return;
+      }
+      if(body.playerInfo){
+        el('in-valuer-age').value = body.age;
+        el('in-valuer-overall').value = body.overall;
+        if(body.position) el('in-valuer-position').value = body.position;
+      }
+      renderValuerResult(body);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  }
+
+  function renderValuerResult(data){
+    const resultsEl = el('valuer-results');
+    let html = '';
+
+    if(data.playerInfo){
+      const flag = flagLabel(data.playerInfo.retirementYears);
+      html += `<div class="section-subnote">${escapeHtml(data.playerInfo.name ? data.playerInfo.name.trim() : 'Player')} — age ${data.age}, overall ${data.overall} (from a ${escapeHtml(data.playerInfo.source)})</div>`;
+      if(flag){
+        html += `<div class="section-subnote" style="color:${data.playerInfo.retirementYears === 1 ? 'var(--loss)' : 'var(--gold-bright)'};"><strong>${escapeHtml(flag)}</strong></div>`;
+      }
+    }
+
+    if(data.worthless){
+      html += `<div class="comps-panel valuer-headline"><div class="label">Quick resell value</div><div class="value loss">$0</div></div><div class="section-subnote" style="text-align:center;color:var(--loss);">Red flag, still under contract — no resale value.</div>`;
+      resultsEl.innerHTML = html;
+      return;
+    }
+
+    if(!data.position){
+      html += `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">No position resolved — can't compute a midpoint without one.</div></div>`;
+      resultsEl.innerHTML = html;
+      return;
+    }
+
+    const tierNote = data.adjOverall === data.overall ? ' (tier break — exact overall used)' : '';
+    html += `<div class="comps-panel valuer-headline">
+      <div class="label">Quick resell value${data.usedFlagMatching ? ' (flag-matched)' : ''}</div>
+      <div class="value">${data.midpoint != null ? fmt(data.midpoint) : '—'}</div>
+    </div>
+    <div class="valuer-sub">Midpoint of general and position-specific live floor · reference overall ${data.adjOverall}${tierNote}</div>`;
+
+    if(data.floor3 && data.floor3.outlier){
+      html += `<div class="section-subnote" style="text-align:center;color:var(--loss);margin-top:8px;"><strong>⚠ Position floor looks like an outlier</strong> — it's less than half the price of the next-cheapest listing for that position. Could be a genuine steal, or a mispriced/scam listing. Worth checking that specific listing before relying on it.</div>`;
+    }
+    if(data.floor1 && data.floor1.outlier){
+      html += `<div class="section-subnote" style="text-align:center;color:var(--loss);margin-top:4px;"><strong>⚠ General floor also looks like an outlier</strong> for the same reason.</div>`;
+    }
+
+    html += `<div class="comps-panel" style="margin-top:10px;"><div class="comps-summary">`;
+    html += floorCell(`General${data.usedFlagMatching ? ' (flag-matched)' : ` (age ${data.age})`}`, data.floor1, false);
+    html += floorCell(`Position ${data.position}${data.usedFlagMatching ? ' (flag-matched)' : ` (age ${data.age})`}`, data.floor3, false);
+    html += `</div></div>`;
+
+    resultsEl.innerHTML = html;
+  }
+
+  function floorCell(label, stats, isPrimary){
+    if(!stats || stats.floor == null){
+      return `<div class="stat"><span class="label">${escapeHtml(label)}</span><span class="value">${stats && stats.count === 0 ? '0 found' : '—'}</span></div>`;
+    }
+    const outlierMark = stats.outlier ? ' <span style="color:var(--loss);" title="Possible outlier">⚠</span>' : '';
+    return `<div class="stat"><span class="label">${escapeHtml(label)} (${stats.count})</span><span class="value${isPrimary ? ' gold' : ''}">${fmt(stats.floor)}${outlierMark}</span></div>`;
+  }
+
+  function floorGroupBlock(data, isLive){
+    if(data.worthless){
+      return `<div class="comps-panel"><div class="comps-summary"><div class="stat"><span class="label">Value</span><span class="value" style="color:var(--loss);">$0 — worthless</span></div></div><div class="comps-empty" style="color:var(--loss);">Red retirement flag and still under contract to a club — this player has no resale value.</div></div>`;
+    }
+
+    const age = data.age, adjOverall = data.adjOverall, position = data.position;
+    const tierNote = adjOverall === data.overall ? ' (tier break — using exact overall, not -1)' : '';
+    let html = `<div class="comps-panel">`;
+    html += `<div class="section-subnote" style="margin-top:0;margin-bottom:10px;">Reference overall: ${adjOverall}${tierNote}</div>`;
+    html += `<div class="comps-summary">`;
+
+    if(data.usedFlagMatching){
+      html += floorCell(`Overall ${adjOverall}, flag-matched`, data.floor1, true);
+      if(position){
+        html += floorCell(`Overall ${adjOverall}, flag-matched, pos ${position}`, data.floor3, true);
+        html += `<div class="stat"><span class="label">Midpoint (general ↔ position)</span><span class="value gold">${data.midpoint != null ? fmt(data.midpoint) : '—'}</span></div>`;
+      }
+    } else {
+      html += floorCell(`Overall ${adjOverall}, age ${age}`, data.floor1, true);
+      html += floorCell(`Overall ${adjOverall}, age ${age - 1}`, data.floor2, false);
+      if(position){
+        html += floorCell(`Overall ${adjOverall}, age ${age}, pos ${position}`, data.floor3, true);
+        html += `<div class="stat"><span class="label">Midpoint (general ↔ position)</span><span class="value gold">${data.midpoint != null ? fmt(data.midpoint) : '—'}</span></div>`;
+      }
+    }
+    html += `</div></div>`;
+    return html;
+  }
+
+  function renderCombinedFloorResults(live, hist){
+    const resultsEl = el('floor-results');
+    let html = '';
+    const info = (live && live.playerInfo) || (hist && hist.playerInfo);
+    const age = live.age, overall = live.overall, position = live.position;
+    if(info){
+      const flag = flagLabel(info.retirementYears);
+      html += `<div class="section-subnote">${escapeHtml(info.name ? info.name.trim() : 'Player')} — age ${age}, overall ${overall}${info.positions ? ', positions ' + escapeHtml(info.positions.join('/')) : ''} (from a ${escapeHtml(info.source)})</div>`;
+      if(flag){
+        html += `<div class="section-subnote" style="color:${info.retirementYears === 1 ? 'var(--loss)' : 'var(--gold-bright)'};"><strong>${escapeHtml(flag)}</strong>${info.retirementYears === 1 ? (info.isFreeAgent ? ' — but a free agent, so value isn\'t zeroed' : ' — under contract') : ''} — age disregarded, matching against other flagged players instead.</div>`;
+      }
+    }
+
+    html += `<div class="section-subnote" style="margin-top:10px;"><strong>Live — currently for sale right now</strong></div>`;
+    html += floorGroupBlock(live, true);
+
+    html += `<div class="section-subnote" style="margin-top:14px;"><strong>Recent sale history</strong> — for context, not what's buyable right now</div>`;
+    html += floorGroupBlock(hist, false);
+
+    resultsEl.innerHTML = html;
+  }
+
+  async function runFloorBulk(){
+    const resultsEl = el('floor-bulk-results');
+    const progressEl = el('floor-bulk-progress');
+    const raw = el('in-floor-bulk').value;
+    const ids = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    if(ids.length === 0){
+      showToast('Paste at least one player ID');
+      return;
+    }
+    const liveMode = el('in-floor-bulk-live').checked;
+
+    if(liveMode){
+      await runFloorBulkLive(ids.slice(0, 100));
+      return;
+    }
+
+    progressEl.classList.add('hidden');
+    el('floor-bulk-aggregate').innerHTML = '';
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Checking floors…</div></div>';
+    try{
+      const res = await fetch(MARKET_FLOOR_BULK_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ items: ids.map(id => (bulkCsvContext && bulkCsvContext[id]) ? bulkCsvContext[id] : { playerId: id }) })
+      });
+      const body = await res.json();
+      if(!res.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(body.error || 'Bulk check failed')}</div></div>`;
+        return;
+      }
+      el('floor-bulk-aggregate').innerHTML = renderBulkAggregateSummary(body.results);
+      renderFloorBulkResults(body.results, body.truncated);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  }
+
+  async function runFloorBulkLive(ids){
+    const resultsEl = el('floor-bulk-results');
+    const progressEl = el('floor-bulk-progress');
+    progressEl.classList.remove('hidden');
+    progressEl.textContent = `Checking 0/${ids.length}…`;
+    el('floor-bulk-aggregate').innerHTML = '';
+
+    resultsEl.innerHTML = `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Overall</th><th>Flag</th><th>Floor (ovr-1, age/flag)</th><th>Floor (ovr-1, age-1)</th><th>Floor (ovr-1, pos)</th><th>Midpoint</th></tr></thead>
+          <tbody id="floor-bulk-live-body"></tbody>
+        </table>
+      </div>
+    `;
+    const tbody = el('floor-bulk-live-body');
+    const liveResults = [];
+
+    for(let i = 0; i < ids.length; i++){
+      const id = ids[i];
+      progressEl.textContent = `Checking ${i + 1}/${ids.length}… (${id})`;
+      const requestBody = (bulkCsvContext && bulkCsvContext[id]) ? bulkCsvContext[id] : { playerId: id };
+      let result;
+      try{
+        const res = await fetch(MARKET_LIVE_FLOOR_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(requestBody)
+        });
+        const body = await res.json();
+        result = res.ok ? (body.found === false ? { playerId: id, found: false, message: body.message } : { ...body, playerId: id }) : { playerId: id, found: false, message: body.error || 'Lookup failed' };
+      }catch(err){
+        result = { playerId: id, found: false, message: 'Network error' };
+      }
+      liveResults.push(result);
+      tbody.insertAdjacentHTML('beforeend', floorBulkRow(result));
+    }
+
+    progressEl.textContent = `Done — checked ${ids.length} player${ids.length === 1 ? '' : 's'} live.`;
+    el('floor-bulk-aggregate').innerHTML = renderBulkAggregateSummary(liveResults);
+  }
+
+  function computeBulkAggregate(results){
+    let totalMidpoint = 0, includedCount = 0, worthlessCount = 0, noCompsCount = 0, notFoundCount = 0;
+    for(const r of results){
+      if(!r.found){ notFoundCount++; continue; }
+      if(r.worthless){ worthlessCount++; continue; }
+      if(r.midpoint == null){ noCompsCount++; continue; }
+      totalMidpoint += r.midpoint;
+      includedCount++;
+    }
+    return {
+      totalMidpoint,
+      totalBid70: totalMidpoint * 0.7,
+      includedCount, worthlessCount, noCompsCount, notFoundCount,
+      totalChecked: results.length
+    };
+  }
+
+  function renderBulkAggregateSummary(results){
+    const agg = computeBulkAggregate(results);
+    if(agg.includedCount === 0){
+      return `<div class="comps-panel"><div class="comps-empty">No players had a usable midpoint value to aggregate.</div></div>`;
+    }
+    let warnings = '';
+    if(agg.worthlessCount > 0){
+      warnings += `<div class="section-subnote" style="color:var(--loss);">${agg.worthlessCount} player${agg.worthlessCount===1?'':'s'} excluded — red flag, under contract, worth $0.</div>`;
+    }
+    if(agg.noCompsCount > 0){
+      warnings += `<div class="section-subnote" style="color:var(--gold-bright);">${agg.noCompsCount} player${agg.noCompsCount===1?'':'s'} excluded — no comps found, thin liquidity, low confidence on that profile.</div>`;
+    }
+    if(agg.notFoundCount > 0){
+      warnings += `<div class="section-subnote" style="color:var(--loss);">${agg.notFoundCount} player${agg.notFoundCount===1?'':'s'} couldn't be valued at all (missing data).</div>`;
+    }
+    return `
+      <div class="comps-panel valuer-headline">
+        <div class="label">Aggregate gallery — your 70% bid</div>
+        <div class="value">${fmt(agg.totalBid70)}</div>
+      </div>
+      <div class="valuer-sub">Based on ${agg.includedCount} of ${agg.totalChecked} players (sum of midpoints: ${fmt(agg.totalMidpoint)})</div>
+      ${warnings}
+    `;
+  }
+
+  function floorBulkRow(r){
+    if(!r.found){
+      return `<tr><td>${escapeHtml(r.playerId || '—')}</td><td colspan="7" style="color:var(--muted);">${escapeHtml(r.message || 'Not found')}</td></tr>`;
+    }
+    const name = r.playerInfo && r.playerInfo.name ? r.playerInfo.name.trim() : '—';
+    const flagText = flagLabel(r.playerInfo ? r.playerInfo.retirementYears : null);
+    if(r.worthless){
+      return `<tr>
+        <td>${escapeHtml(r.playerId || '—')}</td>
+        <td>${escapeHtml(name)}</td>
+        <td>${r.age}</td>
+        <td>${r.overall}</td>
+        <td colspan="5" style="color:var(--loss);">Red flag, under contract — worth $0</td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${escapeHtml(r.playerId || '—')}</td>
+      <td>${escapeHtml(name)}</td>
+      <td>${r.age}</td>
+      <td>${r.overall}${r.adjOverall !== r.overall ? ' (ref ' + r.adjOverall + ')' : ''}</td>
+      <td>${flagText ? escapeHtml(flagText) : '—'}</td>
+      <td class="mono">${r.floor1 && r.floor1.floor != null ? fmt(r.floor1.floor) : '—'}</td>
+      <td class="mono">${r.floor2 && r.floor2.floor != null ? fmt(r.floor2.floor) : (r.usedFlagMatching ? 'n/a (flag mode)' : '—')}</td>
+      <td class="mono">${r.floor3 && r.floor3.floor != null ? fmt(r.floor3.floor) : '—'}</td>
+      <td class="mono">${r.midpoint != null ? fmt(r.midpoint) : '—'}</td>
+    </tr>`;
+  }
+
+  function renderFloorBulkResults(results, truncated){
+    const resultsEl = el('floor-bulk-results');
+    let html = '';
+    if(truncated){
+      html += `<div class="section-subnote" style="color:var(--loss);">Only the first 100 IDs were checked — split larger lists into batches.</div>`;
+    }
+    const rows = results.map(floorBulkRow).join('');
+    html += `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Overall</th><th>Flag</th><th>Floor (ovr-1, age/flag)</th><th>Floor (ovr-1, age-1)</th><th>Floor (ovr-1, pos)</th><th>Midpoint</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+    resultsEl.innerHTML = html;
+  }
+
+  async function fetchDeals(){
+    const resultsEl = el('deals-results');
+    try{
+      const res = await fetch(MARKET_DEALS_URL);
+      const body = await res.json();
+      if(!res.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(body.error || 'Could not fetch deal alerts')}</div></div>`;
+        el('deals-count').textContent = '0 flagged';
+        return;
+      }
+      renderDeals(body.deals || []);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  }
+
+  function renderDeals(deals){
+    const resultsEl = el('deals-results');
+    el('deals-count').textContent = deals.length + ' flagged';
+    if(deals.length === 0){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Nothing flagged right now — either the market\'s not offering anything under the floor threshold, or comps data is still building up.</div></div>';
+      return;
+    }
+    const rows = deals.map(d => {
+      const minsAgo = Math.max(0, Math.round((Date.now() - d.flaggedAt) / 60000));
+      const ageStr = minsAgo < 60 ? minsAgo + 'm ago' : Math.round(minsAgo/60) + 'h ago';
+      const sellTimeStr = d.avgDaysToSell != null ? d.avgDaysToSell.toFixed(1) + 'd' : '—';
+      return `
+        <tr>
+          <td>${escapeHtml(d.name.trim() || '—')}</td>
+          <td>${d.overall}</td>
+          <td>${d.age}</td>
+          <td>${escapeHtml((d.positions||[]).join('/'))}</td>
+          <td class="mono">${fmt(d.price)}</td>
+          <td class="mono">${fmt(d.floor)}</td>
+          <td><span class="discount-badge">−${d.discountPct.toFixed(0)}%</span></td>
+          <td>${sellTimeStr}</td>
+          <td>${escapeHtml(d.sellerName || '—')}</td>
+          <td class="deal-age">${ageStr}</td>
+        </tr>
+      `;
+    }).join('');
+    resultsEl.innerHTML = `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>Player</th><th>OVR</th><th>Age</th><th>Pos</th><th>Listed</th><th>Floor</th><th>Below floor</th><th>Typical sell time</th><th>Seller</th><th>Flagged</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      el('tab-squad').classList.toggle('hidden', tab !== 'squad');
+      el('tab-market').classList.toggle('hidden', tab !== 'market');
+      if(tab === 'market'){
+        fetchDeals();
+        fetchSellers();
+        renderRecentSales();
+      }
+    });
+  });
+
+  async function fetchSellers(){
+    const resultsEl = el('sellers-results');
+    resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty">Loading seller activity…</div></div>';
+    try{
+      const res = await fetch(MARKET_SELLERS_URL);
+      const body = await res.json();
+      if(!res.ok){
+        resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">${escapeHtml(body.error || 'Could not load seller activity')}</div></div>`;
+        return;
+      }
+      renderSellers(body.sellers || []);
+    }catch(err){
+      resultsEl.innerHTML = '<div class="comps-panel"><div class="comps-empty" style="color:var(--loss)">Could not reach the server — network error.</div></div>';
+    }
+  }
+
+  function renderSellers(sellers){
+    const resultsEl = el('sellers-results');
+    if(sellers.length === 0){
+      resultsEl.innerHTML = `<div class="comps-panel"><div class="comps-empty">No seller activity tracked yet — builds up over time from live sales.</div></div>`;
+      return;
+    }
+    const rows = sellers.map(s => `
+      <tr>
+        <td>${escapeHtml(s.sellerName)}${s.isDumping ? '<span class="overdue-badge" style="margin-left:6px;">dumping</span>' : ''}</td>
+        <td>${s.recentCount}</td>
+        <td>${s.salesCount}</td>
+        <td class="mono">${fmt(s.totalValue)}</td>
+        <td>${fmtDate(new Date(s.lastTs).toISOString())}</td>
+      </tr>
+    `).join('');
+    resultsEl.innerHTML = `
+      <div class="comps-panel">
+        <table class="deals-table">
+          <thead><tr><th>Seller</th><th>Sales (last 4h)</th><th>Total sales tracked</th><th>Total value</th><th>Last sale</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  fetchDeals();
+  fetchSellers();
+  setInterval(() => { if(!document.hidden){ fetchDeals(); fetchSellers(); } }, 120000); // refresh every 2 minutes, matching the background scan cadence
+
+  el('btn-toggle-recent-sales').addEventListener('click', () => {
+    recentSalesExpanded = !recentSalesExpanded;
+    renderRecentSales();
+  });
+
+  el('btn-check-live-values').addEventListener('click', checkLiveValues);
+
+  el('btn-refresh-sellers').addEventListener('click', fetchSellers);
+
+  el('btn-price-listing').addEventListener('click', runPriceListing);
+  el('in-price-position').addEventListener('keydown', (e) => { if(e.key === 'Enter') runPriceListing(); });
+
+  el('btn-valuer').addEventListener('click', runValuer);
+  el('in-valuer-position').addEventListener('keydown', (e) => { if(e.key === 'Enter') runValuer(); });
+  el('btn-valuer-playerid').addEventListener('click', runValuerByPlayerId);
+  el('in-valuer-playerid').addEventListener('keydown', (e) => { if(e.key === 'Enter') runValuerByPlayerId(); });
+
+  el('btn-floor-search').addEventListener('click', runFloorSearch);
+  el('in-floor-search').addEventListener('keydown', (e) => { if(e.key === 'Enter') runFloorSearch(); });
+  el('btn-floor-playerid').addEventListener('click', runFloorPlayerIdLookup);
+  el('in-floor-playerid').addEventListener('keydown', (e) => { if(e.key === 'Enter') runFloorPlayerIdLookup(); });
+  el('btn-floor-bulk').addEventListener('click', runFloorBulk);
+
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden){
+      fetchDeals();
+      if(autosyncOn && walletAddress) checkForSales();
+    }
+  });
+
+  loadPlayers();
+  loadSyncSettings();
+  loadAccountSettings();
+})();
+</script>
+
+</body>
+</html>
